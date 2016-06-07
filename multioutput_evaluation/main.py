@@ -4,12 +4,13 @@ import shutil
 import multiprocessing
 from copy import deepcopy
 import pandas as pd
+pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
 import numpy as np
 from sklearn import preprocessing
 from sklearn import model_selection
 from sklearn.model_selection import ParameterGrid
-from metrics import pcc, icc, mse
+from metrics import pcc, icc, mse, f1_detection 
 
 
 
@@ -40,7 +41,6 @@ def _evaluate( pwd, metric=pcc, independent=True):
         Y_HAT.append(y_hat)
         SETTING.append(setting)
 
-    # getting best model (per output)
     res = np.vstack([metric(ii,y) for ii in Y_HAT])
     if independent:
         idx = np.argmax(res,0)
@@ -48,11 +48,15 @@ def _evaluate( pwd, metric=pcc, independent=True):
         idx = np.tile(np.argmax(res.mean(1)),(res.shape[1]))
 
     y_hat = np.array([Y_HAT[i][:,n] for n,i in enumerate(idx)]).T
-    print pcc(y_hat,y).mean()
-    print icc(y_hat,y).mean()
-    print mse(y_hat,y).mean()
+    dat = np.vstack([
+        pcc(y_hat,y),icc(y_hat,y),mse(y_hat,y),f1_detection(y_hat,y)
+        ])
+    dat = np.hstack([dat,dat.mean(1)[:,None]])
+    columns = [str(i) for i in np.arange(y_hat.shape[1])]+['avr.']
+    index = ['PCC','ICC','MSE','F1']
+    return pd.DataFrame(dat,index=index, columns = columns)
 
-def benchmark(clf, X, y, S, folds=5, out='/tmp/', mode='w', verbose=0):
+def run(clf, X, y, S, folds=5, out='/tmp/', mode='w', verbose=0):
     '''
     '''
     name = clf.__class__.__name__
@@ -74,10 +78,6 @@ def benchmark(clf, X, y, S, folds=5, out='/tmp/', mode='w', verbose=0):
     y_hat = np.stack(p.map(_predict,args))
     p.close()
 
-    _evaluate(out+name)
-
-        # a1 a2 a3 avr
-    # icc
-    # pcc
-    # mse
-
+    tab = _evaluate(out+name)
+    print name
+    print tab

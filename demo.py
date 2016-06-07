@@ -8,5 +8,6 @@ X,y = make_multilabel_classification()
 # 10 subjects
 S = np.random.randint(0,10,y.shape[0])
 
+# run X fold subject independent corss validation
 clf = me.estimator.MVR()
-me.benchmark(clf, X, y, S, folds=3, out='/tmp')
+me.run(clf, X, y, S, folds=3, out='/tmp')

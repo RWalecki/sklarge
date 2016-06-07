@@ -100,3 +100,34 @@ def pcc(y_hat, y_lab):
     res = np.array(res)
     res[np.isnan(res)] = 0
     return _post_process(res)
+
+def f1_average(y_hat, y_lab):
+    y_hat, y_lab = _pre_process(y_hat, y_lab)
+    res = []
+    for c in np.unique(y_lab):
+
+        TP_c = np.sum((y_lab == c)*(y_hat == c), 1)
+        FP_c = np.sum((y_lab != c)*(y_hat == c), 1)
+        FN_c = np.sum((y_lab == c)*(y_hat != c), 1)
+        F1_c = (2.*TP_c)/(2*TP_c+FP_c+FN_c).astype(float)
+
+        # set f1 to 0 if there are no TP (avoid division by 0!)
+        F1_c[np.isnan(F1_c)] = 0
+        F1_c[np.isinf(F1_c)] = 0
+        res.append(F1_c)
+
+    res = np.array(res).mean(0)
+    return _post_process(res)
+
+def f1_detection(y_hat, y_lab):
+    y_hat, y_lab = _pre_process(y_hat, y_lab)
+    y_hat = y_hat>0
+    y_lab = y_lab>0
+
+    TP = np.sum((y_lab == 1)*(y_hat == 1), 1)
+    FP = np.sum((y_lab != 1)*(y_hat == 1), 1)
+    FN = np.sum((y_lab == 1)*(y_hat != 1), 1)
+    F1 = (2.*TP)/(2*TP+FP+FN).astype(float)
+
+    F1[np.isinf(F1)] = 0
+    return _post_process(F1)
