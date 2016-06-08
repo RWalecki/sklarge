@@ -6,7 +6,7 @@ from sklearn.multioutput import MultiOutputRegressor as MR
 from sklearn.linear_model import Ridge as _Ridge
 class MVR():
     estimator = _Ridge()
-    parameter = {'alpha':10.**np.arange(-6,6)}
+    parameter = {'alpha':10.**np.arange(-5,6)}
 
 from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
 class KNN(_KNeighborsClassifier):
@@ -16,7 +16,7 @@ class KNN(_KNeighborsClassifier):
 from sklearn.linear_model import MultiTaskLasso as _MultiTaskLasso
 class MTL():
     estimator = _MultiTaskLasso()
-    parameter = {'alpha':10.**np.arange(-6,6)}
+    parameter = {'alpha':10.**np.arange(-5,6)}
 
 from sklearn.ensemble import RandomForestClassifier as _RandomForestClassifier
 class RF(_RandomForestClassifier):
@@ -24,14 +24,14 @@ class RF(_RandomForestClassifier):
     parameter = {'n_estimators': 2**np.arange(2,6)}
 
 from sklearn.linear_model import SGDClassifier as _SGDClassifier
-class SVM():
+class SVC():
     estimator = MC(_SGDClassifier(n_iter=100))
-    parameter = {'estimator__alpha': 10.**np.arange(-6,6)}
+    parameter = {'estimator__alpha': 10.**np.arange(-5,6)}
 
 from sklearn.linear_model import SGDRegressor as _SGDRegressor
 class SVR():
-    estimator = MR(_SGDClassifier(n_iter=100))
-    parameter = {'estimator__alpha': 10.**np.arange(-6,6)}
+    estimator = MR(_SGDRegressor(n_iter=100))
+    parameter = {'estimator__alpha': 10.**np.arange(-5,6)}
 
 from sklearn.svm import SVC as _SVC
 class libSVC():

@@ -3,7 +3,7 @@ import multioutput_evaluation as me
 import numpy as np
 
 # generate multilabel dataset 
-X,y = make_multilabel_classification()
+X,y = make_multilabel_classification(n_classes=10,random_state=0)
 
 # 10 subjects
 S = np.random.randint(0,10,y.shape[0])
