@@ -62,7 +62,7 @@ def _evaluate( pwd, metric=pcc, independent=True):
     tab = pd.DataFrame(dat,index=index, columns = columns)
     return tab, y_hat, setting
 
-def run(clf, X, y, S, folds=5, out='/tmp/', mode='w', verbose=0):
+def run(clf, X, y, S, folds=5, out='/tmp/', mode='w', verbose=1):
     '''
     '''
     name = clf.__class__.__name__
