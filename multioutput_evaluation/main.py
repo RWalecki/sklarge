@@ -62,7 +62,7 @@ def _evaluate( pwd, metric=pcc, independent=True):
     tab = pd.DataFrame(dat,index=index, columns = columns)
     return tab, y_hat, setting
 
-def run(clf, X, y, S, folds=5, out='/tmp/', mode='w', verbose=1):
+def run(clf, X, y, S, folds=5, metric=pcc, independent=True, out='/tmp/', mode='w', verbose=1):
     '''
     '''
     name = clf.__class__.__name__
@@ -84,7 +84,7 @@ def run(clf, X, y, S, folds=5, out='/tmp/', mode='w', verbose=1):
     y_hat = np.stack(p.map(_predict,args))
     p.close()
 
-    tab, y_hat, setting = _evaluate(out+name)
+    tab, y_hat, setting = _evaluate(out+name, metric, independent)
     if verbose>0:
         print name
         print tab
