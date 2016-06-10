@@ -1,6 +1,3 @@
 import sk_estimator
-try:
-    import tf_estimator
-except:
-    pass
-from .main import *
+import tf_estimator
+import local
