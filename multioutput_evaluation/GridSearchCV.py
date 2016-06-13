@@ -15,6 +15,8 @@ import dill
 import gzip
 import h5py
 
+run_local_script = '/'.join([inspect.getfile(inspect.currentframe()).rsplit('/',1)[0],'run_local.py'])
+run_condor_script = '/'.join([inspect.getfile(inspect.currentframe()).rsplit('/',1)[0],'run_condor.py'])
 
 
 class GridSearchCV():
@@ -24,12 +26,17 @@ class GridSearchCV():
         self.param_grid = param_grid
         self.scoring = scoring
         self.n_jobs = n_jobs
+        if n_jobs==-1:n_jobs=multiprocessing.cpu_count()
         self.cv = cv
         self.verbose = verbose
         self.mode=mode
 
         if output[-1]=='/':output=output[:-1]
         self.output=output
+
+    def get_status(self):
+        print len(glob.glob(self.output+'/*/setting.dlz'))
+        print len(glob.glob(self.output+'/*/predictions.dlz'))
 
     def fit(self, X, y,labels=None):
         params = ParameterGrid(self.param_grid)
@@ -40,9 +47,17 @@ class GridSearchCV():
             labels=f[labels.rsplit('/',1)[1]][::]
             y_lab = f[y.rsplit('/',1)[1]][::]
 
-            data_splits = [i for i in self.cv.split(labels,labels,labels)]
-            self._create_jobs(X, y, data_splits, params, self.output)
-            self._run_local(self.output,self.n_jobs,self.mode,self.verbose)
+            tr_te_splits = [i for i in self.cv.split(labels,labels,labels)]
+
+            self._create_jobs(X, y, tr_te_splits, params, self.output)
+
+            # run all jobs on the local machine
+            subprocess.call([
+                "python", run_local_script,self.output, str(self.mode), str(self.n_jobs), str(self.verbose)
+                ],
+                stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT
+                )
+
             y_hat = self._joint_resutls(self.output)
 
             # load labels and evaluate models
@@ -66,11 +81,6 @@ class GridSearchCV():
             experiment['param']=param
             experiment['estimator']=self.estimator
             dill.dump(experiment, file(out+'/setting.dlz','wb'))
-
-    def _run_local(self,path,n_jobs=-1,mode='c',verbose=1):
-        if n_jobs==-1:n_jobs=multiprocessing.cpu_count()
-        py_file = '/'.join([inspect.getfile(inspect.currentframe()).rsplit('/',1)[0],'run_local.py'])
-        subprocess.call(["python", py_file, path, str(mode), str(n_jobs),str(verbose)])
 
     def _find_best_performing_parameter(self, y_lab, y_hat, metric=pcc, independent=True):
         '''

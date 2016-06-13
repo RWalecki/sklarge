@@ -4,10 +4,18 @@ from sklearn.multioutput import MultiOutputRegressor as MR
 
 def preprocessing(X,y=None):
 
-    # X = np.hstack((X[:,0],X[:,1]))
-    # X[np.isnan(X)]=0
+    # load data into memory
+    X = X[::]
+
+    # concatonate all features if X has more than 2 dimensions
+    X = X.reshape(X.shape[0],-1)
+
+    # todo: preprocess the data and remove this
+    X[np.isnan(X)]=0
+
     if y!=None:
-        # y[y==9]=0
+        y = y[::]
+        y[y==9]=0
         return X,y
     return X
 

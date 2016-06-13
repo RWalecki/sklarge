@@ -11,6 +11,7 @@ import os
 import multiprocessing
 import numpy as np
 from sklearn.linear_model import Ridge
+
 def _run_job(args):
 
     # check if predictions are already computed
@@ -36,7 +37,7 @@ def _run_job(args):
         cPickle.dump(y_hat,gzip.open(output,'wb'))
 
 if __name__ == '__main__':
-    pwd, mode, n_jobs, verbose = sys.argv[1:]
+    pwd, mode, n_jobs, verbose = sys.argv[1:5]
     n_jobs = int(n_jobs)
     tasks = glob.glob(pwd+'/*/setting.dlz')
     tasks = zip(tasks,[mode]*len(tasks))
