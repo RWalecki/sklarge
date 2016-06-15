@@ -4,7 +4,7 @@ python run_local.py <path to job folder> <continue> <n_jobs> <verbose>
 python run_local.py /tmp/blabla/ w 1 1
 '''
 import sys
-import dill, cPickle, gzip
+import dill, pickle, gzip
 import glob
 import h5py 
 import os
@@ -21,7 +21,7 @@ def _run_job(args):
         if os.path.isfile(output):return 0
 
     # open file that contains parameter for the experiment
-    dat = dill.load(file(args[0],'rb'))
+    dat = dill.load(open(args[0],'rb'))
     with h5py.File(dat['pwd_X'].rsplit('/',1)[0]) as f:
 
         # load data from root hdf5 file
@@ -34,7 +34,7 @@ def _run_job(args):
         y_hat = clf.predict(X,te)
 
         # store predictions
-        cPickle.dump(y_hat,gzip.open(output,'wb'))
+        pickle.dump(y_hat,gzip.open(output,'wb'))
 
 if __name__ == '__main__':
     pwd, mode, n_jobs, verbose = sys.argv[1:5]
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     if n_jobs==1:
         for i,task in enumerate(tasks):
-            if verbose:print i
+            if verbose:print(i)
             _run_job(task)
     else:
         p = multiprocessing.Pool(12)

@@ -9,8 +9,8 @@ import inspect
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import ParameterGrid
-from metrics import pcc, icc, mse, f1_detection 
-import cPickle
+from .metrics import pcc, icc, mse, f1_detection 
+import pickle as cPickle
 import dill
 import gzip
 import h5py
@@ -35,8 +35,8 @@ class GridSearchCV():
         self.output=output
 
     def get_status(self):
-        print len(glob.glob(self.output+'/*/setting.dlz'))
-        print len(glob.glob(self.output+'/*/predictions.dlz'))
+        print(len(glob.glob(self.output+'/*/setting.dlz')))
+        print(len(glob.glob(self.output+'/*/predictions.dlz')))
 
     def fit(self, X, y,labels=None):
         params = ParameterGrid(self.param_grid)
@@ -51,6 +51,8 @@ class GridSearchCV():
 
             self._create_jobs(X, y, tr_te_splits, params, self.output)
 
+            import ipdb; ipdb.set_trace()
+
             # run all jobs on the local machine
             subprocess.call([
                 "python", run_local_script,self.output, str(self.mode), str(self.n_jobs), str(self.verbose)
@@ -58,18 +60,19 @@ class GridSearchCV():
                 stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT
                 )
 
-            y_hat = self._joint_resutls(self.output)
+
+            # y_hat = self._joint_resutls(self.output)
 
             # load labels and evaluate models
-            tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
-            pd.set_option('display.float_format', lambda x: '%.2f' % x)
-            if self.verbose>0:print tab
-            if self.verbose>1:
-                for i,p in enumerate(para_best):
-                    print i,p
+            # tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
+            # pd.set_option('display.float_format', lambda x: '%.2f' % x)
+            # if self.verbose>0:print(tab)
+            # if self.verbose>1:
+                # for i,p in enumerate(para_best):
+                    # print(i,p)
 
     def _create_jobs(self, X, y, data_splits, params, out_path):
-        if self.verbose:print 'n_tasks:',len(params)*len(data_splits)
+        if self.verbose:print('n_tasks:',len(params)*len(data_splits))
         for i,[param, data_split] in enumerate(itertools.product(params,data_splits)):
             job_id = str(i).zfill(6)
             out = '/'.join([out_path,job_id])
@@ -80,7 +83,7 @@ class GridSearchCV():
             experiment['data_split']=data_split
             experiment['param']=param
             experiment['estimator']=self.estimator
-            dill.dump(experiment, file(out+'/setting.dlz','wb'))
+            dill.dump(experiment, open(out+'/setting.dlz','wb'))
 
     def _find_best_performing_parameter(self, y_lab, y_hat, metric=pcc, independent=True):
         '''
@@ -104,15 +107,16 @@ class GridSearchCV():
         return tab, y_best, param
 
     def _joint_resutls(self,output):
-        dat = dill.load(file(glob.glob(output+'/*/setting.dlz')[0],'rb'))
+        dat = dill.load(open(glob.glob(output+'/*/setting.dlz')[0],'rb'))
         y_hat  = dill.load(gzip.open(glob.glob(output+'/*/predictions.dlz')[0],'rb'))
+
         N = len(dat['data_split'][0])+len(dat['data_split'][1])
         M = y_hat.shape[1]
 
         # initialize results for each setting
         results = {}
         for f in glob.glob(output+'/*/setting.dlz'):
-            dat = dill.load(file(f,'rb'))
+            dat = dill.load(open(f,'rb'))
             key = str(dat['param'])
             results[key]=np.zeros((N,M))
 
@@ -121,7 +125,7 @@ class GridSearchCV():
         for f in glob.glob(output+'/*/predictions.dlz'):
             pwd = f.rsplit('/',1)[0]
             y_hat   = dill.load(gzip.open(pwd+'/predictions.dlz','rb'))
-            dat = dill.load(file(pwd+'/setting.dlz','rb'))
+            dat = dill.load(open(pwd+'/setting.dlz','rb'))
             te = dat['data_split'][1]
             key = str(dat['param'])
             results[key][te]=y_hat

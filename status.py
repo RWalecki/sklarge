@@ -32,11 +32,13 @@ clf = me.GridSearchCV(
         n_jobs=-1,
         verbose = 2,
         output = '/tmp/demo2',
-        mode = 'w'
+        mode = 'r'
         )
 
-clf.fit(
-        X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
-        y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
-        labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
-        )
+clf.get_status()
+
+# clf.fit(
+        # X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
+        # y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
+        # labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
+        # )
