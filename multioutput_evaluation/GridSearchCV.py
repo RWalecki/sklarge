@@ -21,7 +21,7 @@ import h5py
 
 class GridSearchCV():
 
-    def __init__(self, estimator, param_grid, scoring=pcc , n_jobs = -1, cv=None, verbose=0, mode='w', output='/tmp'):
+    def __init__(self, estimator, param_grid, scoring=pcc , n_jobs = -1, cv=None, verbose=0, mode='w', output='/tmp', submit='local'):
         self.estimator = estimator
         self.param_grid = param_grid
         self.scoring = scoring
@@ -29,6 +29,7 @@ class GridSearchCV():
         self.cv = cv
         self.verbose = verbose
         self.mode=mode
+        self.submit=submit
 
         if output[-1]=='/':output=output[:-1]
         self.output=output
@@ -37,34 +38,38 @@ class GridSearchCV():
         print(len(glob.glob(self.output+'/*/setting.dlz')))
         print(len(glob.glob(self.output+'/*/predictions.dlz')))
 
-    def fit(self, X, y,labels=None):
+    def apply(self, X, y,labels=None):
         params = ParameterGrid(self.param_grid)
         if self.mode=='w':shutil.rmtree(self.output, ignore_errors=True)
 
         # ToDo: check if this can be done cleaner 
         with h5py.File(X.rsplit('/',1)[0]) as f:
             labels=f[labels.rsplit('/',1)[1]][::]
-            y_lab = f[y.rsplit('/',1)[1]][::]
+
 
             tr_te_splits = [i for i in self.cv.split(labels,labels,labels)]
 
             self._create_jobs(X, y, tr_te_splits, params, self.output)
 
-            # self._run_local(self.output, self.n_jobs)
-            self._run_condor(self.output, self.n_jobs)
+            if self.submit=='local':
+                self._run_local(self.output, self.n_jobs)
+            if self.submit=='condor':
+                self._run_condor(self.output, self.n_jobs)
 
-            # y_hat = self._joint_resutls(self.output)
+    def eval(self, y_lab, path_jobs):
+        with h5py.File(y_lab.rsplit('/',1)[0]) as f:
+            y_lab = f[y_lab.rsplit('/',1)[1]][::]
+            y_hat = self._joint_resutls(path_jobs)
 
-            # # load labels and evaluate models
-            # tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
-            # pd.set_option('display.float_format', lambda x: '%.2f' % x)
-            # if self.verbose>0:print(tab)
-            # if self.verbose>1:
-                # for i,p in enumerate(para_best):
-                    # print(i,p)
+            # load labels and evaluate models
+            tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
+            pd.set_option('display.float_format', lambda x: '%.2f' % x)
+            if self.verbose>0:print(tab)
+            if self.verbose>1:
+                for i,p in enumerate(para_best):
+                    print(i,p)
 
     def _create_jobs(self, X, y, data_splits, params, out_path):
-
         if self.verbose:print('n_tasks:',len(params)*len(data_splits))
 
         for i,[param, data_split] in enumerate(itertools.product(params,data_splits)):
@@ -103,7 +108,7 @@ class GridSearchCV():
         p.close()
 
     def _run_condor(self, out_path, n_jobs=-1):
-        pass
+        subprocess.call(['condor_submit',out_path+'/run_condor.cmd'])
 
     def _find_best_performing_parameter(self, y_lab, y_hat, metric=pcc, independent=True):
         '''

@@ -6,9 +6,10 @@ import h5py
 
 f = h5py.File('tests/data/test.h5')
 
-# cv = model_selection.LabelKFold(3)
+# cv = model_selection.LabelKFold()
 cv = model_selection.LeaveOneLabelOut()
-clf = me.sk_estimator.SVC()
+clf = me.sk_estimator.SVR()
+# clf = me.sk_estimator.MVR()
 # clf = me.tf_estimator.DNN_C(verbose=1,max_iter=1)
 
 
@@ -25,18 +26,28 @@ clf = me.sk_estimator.SVC()
 # y_hat = clf.predict(f['X'][:])
 
 # apply parameter search
-clf = me.GridSearchCV(
+GS = me.GridSearchCV(
         clf,
         clf.param_grid,
         cv=cv,
         n_jobs=-1,
         verbose = 2,
-        output = '/tmp/demo2',
-        mode = 'w'
+        output = 'out/SVR',
+        mode = 'w',
+        submit='condor',
         )
 
-clf.fit(
+GS.apply(
         X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
         y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
         labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
         )
+
+# todo:
+# wait untill condor finishes
+# implement a wait/status function
+
+# GS.eval(
+    # '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
+    # 'out/SVR',
+    # )

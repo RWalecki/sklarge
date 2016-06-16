@@ -25,4 +25,3 @@ with h5py.File(dat['pwd_X'].rsplit('/',1)[0]) as f:
 
     # store predictions
     pickle.dump(y_hat,gzip.open(dir_pwd+'/predictions.dlz','wb'))
-    print('__done__')
