@@ -5,6 +5,9 @@ import multiprocessing
 import glob
 import subprocess
 import inspect
+import os
+dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
+
 
 import numpy as np
 import pandas as pd
@@ -26,7 +29,6 @@ class GridSearchCV():
         self.param_grid = param_grid
         self.scoring = scoring
         self.n_jobs = n_jobs
-        if n_jobs==-1:n_jobs=multiprocessing.cpu_count()
         self.cv = cv
         self.verbose = verbose
         self.mode=mode
@@ -51,25 +53,17 @@ class GridSearchCV():
 
             self._create_jobs(X, y, tr_te_splits, params, self.output)
 
-            import ipdb; ipdb.set_trace()
+            self._run_local(self.output, self.n_jobs)
 
-            # run all jobs on the local machine
-            subprocess.call([
-                "python", run_local_script,self.output, str(self.mode), str(self.n_jobs), str(self.verbose)
-                ],
-                stdout=open(os.devnull, 'w'), stderr=subprocess.STDOUT
-                )
-
-
-            # y_hat = self._joint_resutls(self.output)
+            y_hat = self._joint_resutls(self.output)
 
             # load labels and evaluate models
-            # tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
-            # pd.set_option('display.float_format', lambda x: '%.2f' % x)
-            # if self.verbose>0:print(tab)
-            # if self.verbose>1:
-                # for i,p in enumerate(para_best):
-                    # print(i,p)
+            tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
+            pd.set_option('display.float_format', lambda x: '%.2f' % x)
+            if self.verbose>0:print(tab)
+            if self.verbose>1:
+                for i,p in enumerate(para_best):
+                    print(i,p)
 
     def _create_jobs(self, X, y, data_splits, params, out_path):
         if self.verbose:print('n_tasks:',len(params)*len(data_splits))
@@ -84,12 +78,25 @@ class GridSearchCV():
             experiment['param']=param
             experiment['estimator']=self.estimator
             dill.dump(experiment, open(out+'/setting.dlz','wb'))
+            for f in glob.glob(dir_pwd+'/job_files/*'):
+                shutil.copy(f,out)
+
+    def _run_local(self, out_path, n_jobs=-1):
+        '''
+        '''
+        # run all jobs on the local machine
+        jobs = glob.glob(out_path+'/*/execute.sh')
+        if n_jobs==-1:n_jobs=multiprocessing.cpu_count()
+        p = multiprocessing.Pool(n_jobs)
+        p.map(subprocess.call,jobs)
+        p.close()
 
     def _find_best_performing_parameter(self, y_lab, y_hat, metric=pcc, independent=True):
         '''
         '''
-        params = y_hat.keys()
+        params = [i for i in y_hat.keys()]
         res = np.vstack([metric(y_lab,y_hat[p]) for p in params])
+
         if independent:
             idx = np.argmax(res,0)
         else:
