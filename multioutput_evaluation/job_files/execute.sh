@@ -4,8 +4,9 @@ export PATH=''
 export CPATH=''
 export LIBRARY_PATH=''
 #export LD_LIBRARY_PATH=''
+#PYTHONPATH=$PYTHONPATH:/homes/rw2614/.miniconda/lib/python3.5/site-packages/
 
-SOURCES=($HOME/.miniconda $HOME/.linuxbrew /usr/local /usr /)
+SOURCES=(/homes/rw2614/.miniconda /homes/rw2614/.linuxbrew /usr/local /usr /)
 for i in ${SOURCES[*]}; do
 
     export PATH=$PATH:$i/bin
@@ -20,4 +21,4 @@ export PATH=$PATH:/Developer/NVIDIA/CUDA-7.5/bin
 
 scriptDir=$(dirname -- "$(readlink -e -- "$BASH_SOURCE")")
 cd $scriptDir
-python run_local.py
+python $1/run_local.py

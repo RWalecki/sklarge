@@ -18,9 +18,6 @@ import dill
 import gzip
 import h5py
 
-run_local_script = '/'.join([inspect.getfile(inspect.currentframe()).rsplit('/',1)[0],'run_local.py'])
-run_condor_script = '/'.join([inspect.getfile(inspect.currentframe()).rsplit('/',1)[0],'run_condor.py'])
-
 
 class GridSearchCV():
 
@@ -53,22 +50,25 @@ class GridSearchCV():
 
             self._create_jobs(X, y, tr_te_splits, params, self.output)
 
-            self._run_local(self.output, self.n_jobs)
+            # self._run_local(self.output, self.n_jobs)
+            self._run_condor(self.output, self.n_jobs)
 
-            y_hat = self._joint_resutls(self.output)
+            # y_hat = self._joint_resutls(self.output)
 
-            # load labels and evaluate models
-            tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
-            pd.set_option('display.float_format', lambda x: '%.2f' % x)
-            if self.verbose>0:print(tab)
-            if self.verbose>1:
-                for i,p in enumerate(para_best):
-                    print(i,p)
+            # # load labels and evaluate models
+            # tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
+            # pd.set_option('display.float_format', lambda x: '%.2f' % x)
+            # if self.verbose>0:print(tab)
+            # if self.verbose>1:
+                # for i,p in enumerate(para_best):
+                    # print(i,p)
 
     def _create_jobs(self, X, y, data_splits, params, out_path):
+
         if self.verbose:print('n_tasks:',len(params)*len(data_splits))
+
         for i,[param, data_split] in enumerate(itertools.product(params,data_splits)):
-            job_id = str(i).zfill(6)
+            job_id = str(i)
             out = '/'.join([out_path,job_id])
             if not os.path.exists(out):os.makedirs(out)
             experiment = {}
@@ -78,18 +78,32 @@ class GridSearchCV():
             experiment['param']=param
             experiment['estimator']=self.estimator
             dill.dump(experiment, open(out+'/setting.dlz','wb'))
-            for f in glob.glob(dir_pwd+'/job_files/*'):
-                shutil.copy(f,out)
+            shutil.copy(dir_pwd+'/job_files/run_local.py',out)
+        shutil.copy(dir_pwd+'/job_files/execute.sh',out_path)
+
+        n = str((len(glob.glob(out_path+'/*/setting.dlz'))))
+        with open(out_path+'/run_condor.cmd','w') as f:
+            f.write('executable      = '+out_path+'/execute.sh\n')
+            f.write('output          = '+out_path+'/$(Process)/tmp.out\n')
+            f.write('error           = '+out_path+'/$(Process)/tmp.err\n')
+            f.write('log             = '+out_path+'/tmp.log\n')
+            f.write('arguments       = $(Process)\n')
+            f.write('queue '+n+'\n')
+
 
     def _run_local(self, out_path, n_jobs=-1):
         '''
         '''
         # run all jobs on the local machine
-        jobs = glob.glob(out_path+'/*/execute.sh')
+        jobs = glob.glob(out_path+'/*/run_local.py')
         if n_jobs==-1:n_jobs=multiprocessing.cpu_count()
         p = multiprocessing.Pool(n_jobs)
+        jobs = [i for i in zip(['python']*len(jobs),jobs)]
         p.map(subprocess.call,jobs)
         p.close()
+
+    def _run_condor(self, out_path, n_jobs=-1):
+        pass
 
     def _find_best_performing_parameter(self, y_lab, y_hat, metric=pcc, independent=True):
         '''
