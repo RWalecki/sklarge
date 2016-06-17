@@ -2,8 +2,8 @@ import multioutput_evaluation as me
 from sklearn import model_selection
 import numpy as np
 import os
-import h5py
 
+import h5py
 f = h5py.File('tests/data/test.h5')
 
 # cv = model_selection.LeaveOneLabelOut()
@@ -35,12 +35,11 @@ GS.fit(
         X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
         y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
         labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
-        tmp = 'out/MVR',
-        submit='local',
+        tmp = 'out/MVR2',
+        submit='condor',
         )
 
-# GS.eval()
-# GS.eval('out/MVR')
+# GS.eval('out/MVR2')
 
 # todo:
 # wait untill condor finishes

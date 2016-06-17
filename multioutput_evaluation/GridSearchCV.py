@@ -60,7 +60,6 @@ class GridSearchCV():
         job = 0
         for fold in range(n_folds):
             for para in  params:
-                job+=1
 
                 out = '/'.join([out_path,str(job)])
                 if not os.path.exists(out):os.makedirs(out)
@@ -76,6 +75,8 @@ class GridSearchCV():
                 dill.dump(experiment, open(out+'/setting.dlz','wb'))
                 shutil.copy(dir_pwd+'/job_files/run_local.py',out)
                 shutil.copy(dir_pwd+'/job_files/execute.sh',out_path)
+
+                job+=1
 
     @staticmethod
     def _run_local(out_path, n_jobs=-1):
@@ -143,4 +144,4 @@ class GridSearchCV():
         tab = pd.DataFrame(dat,index=index, columns = columns)
 
         pd.set_option('display.float_format', lambda x: '%.2f' % x)
-        print tab
+        print(tab)

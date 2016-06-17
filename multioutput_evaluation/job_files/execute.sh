@@ -17,7 +17,9 @@ for i in ${SOURCES[*]}; do
 done
 
 export PYTHONWARNINGS="ignore"
-export PATH=$PATH:/Developer/NVIDIA/CUDA-7.5/bin
+
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/vol/cuda/7.5.18/lib64"
+export CUDA_HOME=/vol/cuda/7.5.18
 
 scriptDir=$(dirname -- "$(readlink -e -- "$BASH_SOURCE")")
 cd $scriptDir
