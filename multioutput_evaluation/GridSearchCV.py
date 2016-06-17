@@ -1,10 +1,9 @@
-import os
 import shutil
-import itertools
 import multiprocessing
 import glob
 import subprocess
-import inspect
+from collections import defaultdict
+
 import os
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
 
@@ -21,82 +20,65 @@ import h5py
 
 class GridSearchCV():
 
-    def __init__(self, estimator, param_grid, scoring=pcc , n_jobs = -1, cv=None, verbose=0, mode='w', output='/tmp', submit='local'):
-        self.estimator = estimator
+    def __init__(self, clf, param_grid='default', n_jobs = -1, cv=None, verbose=0):
+        '''
+        '''
+        self.clf = clf
         self.param_grid = param_grid
-        self.scoring = scoring
         self.n_jobs = n_jobs
         self.cv = cv
         self.verbose = verbose
-        self.mode=mode
-        self.submit=submit
 
-        if output[-1]=='/':output=output[:-1]
-        self.output=output
+    def fit(self, X, y,labels=None, tmp='/tmp/GridSearchCV', submit='local'):
+        '''
+        '''
+        if tmp[-1]=='/':tmp=tmp[:-1]
+        shutil.rmtree(tmp, ignore_errors=True)
 
-    def get_status(self):
-        print(len(glob.glob(self.output+'/*/setting.dlz')))
-        print(len(glob.glob(self.output+'/*/predictions.dlz')))
-
-    def apply(self, X, y,labels=None):
-        params = ParameterGrid(self.param_grid)
-        if self.mode=='w':shutil.rmtree(self.output, ignore_errors=True)
-
-        # ToDo: check if this can be done cleaner 
+        # (GET TOTAL NUMBER OF FOLDS)
+        # ToDo: check if this can be done in a better way 
         with h5py.File(X.rsplit('/',1)[0]) as f:
-            labels=f[labels.rsplit('/',1)[1]][::]
+            labels_tmp=f[labels.rsplit('/',1)[1]][::]
+            data_splits = [i for i in self.cv.split(labels_tmp,labels_tmp,labels_tmp)]
+            n_folds = len(data_splits)
 
+        self._create_jobs(X, y, labels, n_folds, self.cv, tmp)
 
-            tr_te_splits = [i for i in self.cv.split(labels,labels,labels)]
+        if submit=='local':
+            self._run_local(tmp, self.n_jobs)
+        if submit=='condor':
+            self._run_condor(tmp, self.n_jobs)
 
-            self._create_jobs(X, y, tr_te_splits, params, self.output)
+    def _create_jobs(self,X, y, l, n_folds, cv, out_path):
+        '''
+        '''
+        if self.param_grid=='default':
+            self.param_grid = self.clf.param_grid
+        params = ParameterGrid(self.param_grid)
 
-            if self.submit=='local':
-                self._run_local(self.output, self.n_jobs)
-            if self.submit=='condor':
-                self._run_condor(self.output, self.n_jobs)
+        if self.verbose:print('n_tasks:',len(params)*n_folds)
+        job = 0
+        for fold in range(n_folds):
+            for para in  params:
+                job+=1
 
-    def eval(self, y_lab, path_jobs):
-        with h5py.File(y_lab.rsplit('/',1)[0]) as f:
-            y_lab = f[y_lab.rsplit('/',1)[1]][::]
-            y_hat = self._joint_resutls(path_jobs)
+                out = '/'.join([out_path,str(job)])
+                if not os.path.exists(out):os.makedirs(out)
+                experiment = {}
+                experiment['X']=X
+                experiment['y']=y
+                experiment['labels']=l
+                experiment['para']=para
+                experiment['fold']=fold
+                experiment['eval']=[pcc,icc,mse,f1_detection]
+                experiment['cv']=cv
+                experiment['clf']=self.clf
+                dill.dump(experiment, open(out+'/setting.dlz','wb'))
+                shutil.copy(dir_pwd+'/job_files/run_local.py',out)
+                shutil.copy(dir_pwd+'/job_files/execute.sh',out_path)
 
-            # load labels and evaluate models
-            tab, y_best, para_best = self._find_best_performing_parameter(y_lab, y_hat, self.scoring, 1)
-            pd.set_option('display.float_format', lambda x: '%.2f' % x)
-            if self.verbose>0:print(tab)
-            if self.verbose>1:
-                for i,p in enumerate(para_best):
-                    print(i,p)
-
-    def _create_jobs(self, X, y, data_splits, params, out_path):
-        if self.verbose:print('n_tasks:',len(params)*len(data_splits))
-
-        for i,[param, data_split] in enumerate(itertools.product(params,data_splits)):
-            job_id = str(i)
-            out = '/'.join([out_path,job_id])
-            if not os.path.exists(out):os.makedirs(out)
-            experiment = {}
-            experiment['pwd_X']=X
-            experiment['pwd_y']=y
-            experiment['data_split']=data_split
-            experiment['param']=param
-            experiment['estimator']=self.estimator
-            dill.dump(experiment, open(out+'/setting.dlz','wb'))
-            shutil.copy(dir_pwd+'/job_files/run_local.py',out)
-        shutil.copy(dir_pwd+'/job_files/execute.sh',out_path)
-
-        n = str((len(glob.glob(out_path+'/*/setting.dlz'))))
-        with open(out_path+'/run_condor.cmd','w') as f:
-            f.write('executable      = '+out_path+'/execute.sh\n')
-            f.write('output          = '+out_path+'/$(Process)/tmp.out\n')
-            f.write('error           = '+out_path+'/$(Process)/tmp.err\n')
-            f.write('log             = '+out_path+'/tmp.log\n')
-            f.write('arguments       = $(Process)\n')
-            f.write('queue '+n+'\n')
-
-
-    def _run_local(self, out_path, n_jobs=-1):
+    @staticmethod
+    def _run_local(out_path, n_jobs=-1):
         '''
         '''
         # run all jobs on the local machine
@@ -107,53 +89,58 @@ class GridSearchCV():
         p.map(subprocess.call,jobs)
         p.close()
 
-    def _run_condor(self, out_path, n_jobs=-1):
+    @staticmethod
+    def _run_condor(out_path, n_jobs=-1):
+        '''
+        '''
+        n = str((len(glob.glob(out_path+'/*/setting.dlz'))))
+
+        # create condor file:
+        with open(out_path+'/run_condor.cmd','w') as f:
+            f.write('executable      = '+out_path+'/execute.sh\n')
+            f.write('output          = '+out_path+'/$(Process)/tmp.out\n')
+            f.write('error           = '+out_path+'/$(Process)/tmp.err\n')
+            f.write('log             = '+out_path+'/tmp.log\n')
+            f.write('arguments       = $(Process)\n')
+            f.write('queue '+n+'\n')
+
         subprocess.call(['condor_submit',out_path+'/run_condor.cmd'])
 
-    def _find_best_performing_parameter(self, y_lab, y_hat, metric=pcc, independent=True):
+    @staticmethod
+    def eval(output='/tmp/GridSearchCV', independent=True):
         '''
         '''
-        params = [i for i in y_hat.keys()]
-        res = np.vstack([metric(y_lab,y_hat[p]) for p in params])
+        print('jobs:',len(glob.glob(output+'/*/setting.dlz')))
+        print('done:',len(glob.glob(output+'/*/results.csv')))
 
+        avr_res = defaultdict(list)
+        for f in glob.glob(output+'/*/results.csv'):
+            dat = dill.load(open(f.rsplit('/',1)[0]+'/setting.dlz','rb'))
+            res = np.genfromtxt(f.rsplit('/',1)[0]+'/results.csv',delimiter=',')
+            avr_res[str(dat['para'])].append(res)
+
+        # get tables with results
+        table = []
+        for para in avr_res:
+            avr_res[para] = np.mean(np.stack(avr_res[para]),0)
+            table.append(avr_res[para])
+        table = np.stack(table).transpose(1,0,2)
+
+        # results of first metric in table [para X output]
         if independent:
-            idx = np.argmax(res,0)
+            idx = np.argmax(table[0],0)
         else:
-            idx = np.tile(np.argmax(res.mean(1)),(res.shape[1]))
-        param = [params[i] for i in idx]
+            idx = np.tile(np.argmax(table[0].mean(1)),table.shape[2])
 
-        y_best = np.array([y_hat[params[i]][:,n] for n,i in enumerate(idx)]).T
-        dat = np.vstack([
-            pcc(y_lab,y_best),icc(y_lab,y_best),mse(y_lab,y_best),f1_detection(y_lab,y_best)
-            ])
-        dat = np.hstack([dat,dat.mean(1)[:,None]])
-        columns = [str(i) for i in np.arange(y_lab.shape[1])]+['avr.']
+        # store all results in one table [measures X output]
+        dat = np.vstack([tab_[idx,np.arange(idx.shape[0])] for tab_ in table])
+
+        # add avr for each measure
+        dat = np.hstack((dat,dat.mean(1)[:,None]))
+        
+        columns = [str(i) for i in np.arange(idx.shape[0])]+['avr.']
         index = ['PCC','ICC','MSE','F1']
         tab = pd.DataFrame(dat,index=index, columns = columns)
-        return tab, y_best, param
 
-    def _joint_resutls(self,output):
-        dat = dill.load(open(glob.glob(output+'/*/setting.dlz')[0],'rb'))
-        y_hat  = dill.load(gzip.open(glob.glob(output+'/*/predictions.dlz')[0],'rb'))
-
-        N = len(dat['data_split'][0])+len(dat['data_split'][1])
-        M = y_hat.shape[1]
-
-        # initialize results for each setting
-        results = {}
-        for f in glob.glob(output+'/*/setting.dlz'):
-            dat = dill.load(open(f,'rb'))
-            key = str(dat['param'])
-            results[key]=np.zeros((N,M))
-
-    
-        # fill with predictions
-        for f in glob.glob(output+'/*/predictions.dlz'):
-            pwd = f.rsplit('/',1)[0]
-            y_hat   = dill.load(gzip.open(pwd+'/predictions.dlz','rb'))
-            dat = dill.load(open(pwd+'/setting.dlz','rb'))
-            te = dat['data_split'][1]
-            key = str(dat['param'])
-            results[key][te]=y_hat
-
-        return results
+        pd.set_option('display.float_format', lambda x: '%.2f' % x)
+        print tab
