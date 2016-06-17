@@ -6,10 +6,13 @@ import os
 import h5py
 f = h5py.File('tests/data/test.h5')
 
-# cv = model_selection.LeaveOneLabelOut()
-# clf = me.sk_estimator.SVR()
-clf = me.sk_estimator.MVR()
-# clf = me.tf_estimator.DNN_C(verbose=1,max_iter=1)
+cv = model_selection.LeaveOneLabelOut()
+# cv = model_selection.LabelKFold(2)
+CLF=[]
+CLF.append(me.sk_estimator.MVR())
+CLF.append(me.sk_estimator.MTL())
+CLF.append(me.sk_estimator.SVC())
+CLF.append(me.sk_estimator.SVR())
 
 
 # simple fit/prediction
@@ -25,21 +28,23 @@ clf = me.sk_estimator.MVR()
 # y_hat = clf.predict(f['X'][:])
 
 # apply parameter search
-GS = me.GridSearchCV(
-        clf = me.sk_estimator.MVR(),
-        cv=model_selection.LabelKFold(2),
-        verbose = 2,
-        )
+for clf in CLF:
+    GS = me.GridSearchCV(
+            clf=clf,
+            cv=cv,
+            verbose = 2,
+            )
 
-GS.fit(
-        X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
-        y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
-        labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
-        tmp = 'out/MVR2',
-        submit='condor',
-        )
+    GS.fit(
+            X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
+            y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
+            labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
+            tmp = 'tmp/aaa',
+            submit='condor',
+            )
 
-# GS.eval('out/MVR2')
+    # print(clf.__class__.__name__)
+    # GS.eval('tmp/aaa/'+clf.__class__.__name__)
 
 # todo:
 # wait untill condor finishes

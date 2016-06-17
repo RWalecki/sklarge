@@ -29,10 +29,13 @@ class GridSearchCV():
         self.cv = cv
         self.verbose = verbose
 
-    def fit(self, X, y,labels=None, tmp='/tmp/GridSearchCV', submit='local'):
+    def fit(self, X, y,labels=None, tmp='/tmp/', submit='local'):
         '''
         '''
-        if tmp[-1]=='/':tmp=tmp[:-1]
+        if tmp[-1]!='/':tmp=tmp+'/'
+        tmp = tmp+self.clf.__class__.__name__+'/'
+        print(tmp)
+
         shutil.rmtree(tmp, ignore_errors=True)
 
         # (GET TOTAL NUMBER OF FOLDS)
@@ -69,7 +72,7 @@ class GridSearchCV():
                 experiment['labels']=l
                 experiment['para']=para
                 experiment['fold']=fold
-                experiment['eval']=[pcc,icc,mse,f1_detection]
+                experiment['eval']=[mse,pcc,icc,f1_detection]
                 experiment['cv']=cv
                 experiment['clf']=self.clf
                 dill.dump(experiment, open(out+'/setting.dlz','wb'))
@@ -129,9 +132,9 @@ class GridSearchCV():
 
         # results of first metric in table [para X output]
         if independent:
-            idx = np.argmax(table[0],0)
+            idx = np.argmin(table[0],0)
         else:
-            idx = np.tile(np.argmax(table[0].mean(1)),table.shape[2])
+            idx = np.tile(np.argmin(table[0].mean(1)),table.shape[2])
 
         # store all results in one table [measures X output]
         dat = np.vstack([tab_[idx,np.arange(idx.shape[0])] for tab_ in table])
@@ -140,7 +143,7 @@ class GridSearchCV():
         dat = np.hstack((dat,dat.mean(1)[:,None]))
         
         columns = [str(i) for i in np.arange(idx.shape[0])]+['avr.']
-        index = ['PCC','ICC','MSE','F1']
+        index = ['MSE','PCC','ICC','F1']
         tab = pd.DataFrame(dat,index=index, columns = columns)
 
         pd.set_option('display.float_format', lambda x: '%.2f' % x)

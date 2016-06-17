@@ -42,7 +42,7 @@ class MVR():
 
 from sklearn.linear_model import MultiTaskLasso as _MultiTaskLasso
 class MTL():
-    param_grid = {'alpha':10.**np.arange(-5,6)}
+    param_grid = {'alpha':10.**np.arange(-6,10)}
     estimator = _MultiTaskLasso()
     def fit(self,X,y,mask=False):
         if np.any(mask):
@@ -62,7 +62,7 @@ class MTL():
 
 from sklearn.svm import SVR as libSVR
 class SVR():
-    estimator = MR(libSVR(max_iter=1000))
+    estimator = MR(libSVR(max_iter=2000))
     param_grid = [{
             'estimator__C': 10.**np.arange(-3,3),
             'estimator__kernel': ['linear'],
@@ -90,7 +90,7 @@ class SVR():
 
 from sklearn.svm import SVC as libSVC
 class SVC():
-    estimator = MC(libSVC(max_iter=1000))
+    estimator = MC(libSVC(max_iter=2000))
     param_grid = [{
             'estimator__C': 10.**np.arange(-3,3),
             'estimator__kernel': ['linear'],
