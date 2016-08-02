@@ -15,6 +15,7 @@ class DNN_C():
             'estimator__optimizer': ['SGD','Adam','Adagrad'],
             'estimator__batch_size': [16,32,64],
             }
+    preprocessing = preprocessing
     def fit(self,X,y,mask=False):
         if np.any(mask):
             X = X[mask,:]
@@ -28,14 +29,13 @@ class DNN_C():
             verbose=self.verbose)
             )
 
-        self.estimator.fit(np.float32(X),np.int32(y))
+        self.estimator.fit(np.float32(X),np.float32(y))
         return self
     def predict(self,X,mask=False):
         if np.any(mask):
             X = X[mask,:]
         X = preprocessing(X)
-        return self.estimator.predict(X.astype(np.int32))
-
+        return self.estimator.predict(X)
     def set_params(self,**args):
         self.estimator.set_params(**args)
 
@@ -55,6 +55,7 @@ class DNN_R():
 
         self.estimator=MR(learn.TensorFlowDNNRegressor(
             hidden_units=[10, 20, 10], 
+            n_classes=n_classes, 
             steps=self.max_iter,
             verbose=self.verbose)
             )
@@ -68,4 +69,3 @@ class DNN_R():
             X = X[mask.tolist()]
         y_hat = self.estimator.predict(np.float16(X))
         return y_hat
-

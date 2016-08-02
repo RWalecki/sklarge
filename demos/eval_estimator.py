@@ -1,9 +1,10 @@
 import multioutput_evaluation as me
 from sklearn import model_selection
 import numpy as np
-import os
 
 import h5py
+
+# load dat
 f = h5py.File('tests/data/test.h5')
 
 # cv = model_selection.LeaveOneLabelOut()
