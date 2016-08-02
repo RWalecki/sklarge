@@ -68,4 +68,3 @@ class DNN_R():
             X = X[mask.tolist()]
         y_hat = self.estimator.predict(np.float16(X))
         return y_hat
-

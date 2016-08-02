@@ -5,4 +5,5 @@ from .sk_estimator import SVC
 from .metrics import *
 from .tf_estimator import DNN_C
 from .tf_estimator import DNN_R
+from .my_estimator import SOR
 from .GridSearchCV import GridSearchCV

@@ -7,16 +7,17 @@ import h5py
 # load dat
 f = h5py.File('tests/data/test.h5')
 
+import ipdb; ipdb.set_trace()
+
 # cv = model_selection.LeaveOneLabelOut()
 cv = model_selection.LabelKFold(2)
-clf = me.sk_estimator.MVR()
-clf = me.tf_estimator.DNN_R(verbose=1,max_iter=100)
+clf = me.my_estimator.SOR()
 
 # simple fit/prediction
-clf.fit(f['X'],f['y'])
+# clf.fit(f['X'],f['y'])
 
-y_hat = clf.predict(f['X'])
-print y_hat
+# y_hat = clf.predict(f['X'])
+# print y_hat
 
 # apply tr/te split
 # clf.fit(f['X'],f['y'],np.arange(0,50))
@@ -27,23 +28,23 @@ print y_hat
 # y_hat = clf.predict(f['X'][:])
 
 # # apply parameter search
-# GS = me.GridSearchCV(
-        # clf=clf,
-        # cv=cv,
-        # verbose = 2,
-        # )
+GS = me.GridSearchCV(
+        clf=clf,
+        cv=cv,
+        verbose = 2,
+        )
 
-# GS.fit(
-        # X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
-        # y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
-        # labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
-        # tmp = 'tmp',
-        # submit='local',
-        # )
+GS.fit(
+        X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
+        y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
+        labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
+        tmp = 'tmp',
+        submit='local',
+        )
 
-# print(clf.__class__.__name__)
-# GS.eval('tmp/'+clf.__class__.__name__)
+print(clf.__class__.__name__)
+GS.eval('tmp/'+clf.__class__.__name__)
 
-# # todo:
-# # wait untill condor finishes
-# # implement a wait/status function
+# todo:
+# wait untill condor finishes
+# implement a wait/status function
