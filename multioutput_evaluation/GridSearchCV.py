@@ -86,10 +86,12 @@ class GridSearchCV():
         '''
         '''
         # run all jobs on the local machine
-        jobs = glob.glob(out_path+'/*/run_local.py')
         if n_jobs==-1:n_jobs=multiprocessing.cpu_count()
         p = multiprocessing.Pool(n_jobs)
+
+        jobs = glob.glob(out_path+'/*/run_local.py')
         jobs = [i for i in zip(['python']*len(jobs),jobs)]
+
         p.map(subprocess.call,jobs)
         p.close()
 

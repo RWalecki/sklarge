@@ -2,3 +2,4 @@ multioutput_evaluation.egg-info
 build
 dist
 tmp
+out
