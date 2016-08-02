@@ -7,7 +7,6 @@ import h5py
 # load dat
 f = h5py.File('tests/data/test.h5')
 
-import ipdb; ipdb.set_trace()
 
 # cv = model_selection.LeaveOneLabelOut()
 cv = model_selection.LabelKFold(2)
@@ -38,12 +37,12 @@ GS.fit(
         X = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/points',
         y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
         labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
-        tmp = 'tmp',
-        submit='local',
+        tmp = 'tmp3',
+        submit='condor',
         )
 
-print(clf.__class__.__name__)
-GS.eval('tmp/'+clf.__class__.__name__)
+# print(clf.__class__.__name__)
+# GS.eval('tmp2/'+clf.__class__.__name__)
 
 # todo:
 # wait untill condor finishes

@@ -25,8 +25,8 @@ y_hat = clf.predict(f['X'][:])
 
 # apply parameter search
 GS = me.GridSearchCV(
-        clf=clf,
-        cv=cv,
+        clf = clf,
+        cv = cv,
         verbose = 2,
         )
 
@@ -35,7 +35,7 @@ GS.fit(
         y = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/au_int',
         labels = '/vol/hmi/projects/robert/data/CNN_DATA/data_gray/disfa.h5/subject_id',
         tmp = 'tmp',
-        submit='local',
+        submit='condor',
         )
 
 print(clf.__class__.__name__)

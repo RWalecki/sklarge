@@ -25,5 +25,10 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
-    packages=find_packages()
+    data_files = [
+        ('./multioutput_evaluation/job_files/', ['./multioutput_evaluation/job_files/execute.sh']),
+        ('./multioutput_evaluation/job_files/', ['./multioutput_evaluation/job_files/run_condor.cmd']),
+        ('./multioutput_evaluation/job_files/', ['./multioutput_evaluation/job_files/run_local.py']),
+        ],
+    packages=find_packages(),
 )

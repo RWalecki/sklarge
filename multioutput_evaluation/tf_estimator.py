@@ -2,7 +2,7 @@ from sklearn.multioutput import MultiOutputClassifier as MC
 from sklearn.multioutput import MultiOutputRegressor as MR
 from tensorflow.contrib.learn.python import learn
 import numpy as np
-from sk_estimator import preprocessing 
+from .sk_estimator import preprocessing 
 
 class DNN_C():
     def __init__(self, max_iter=1000, verbose=0):
