@@ -1,4 +1,5 @@
 import multioutput_evaluation as me
+from sklearn.model_selection import GridSearchCV as GridSearchCV_old
 from sklearn import model_selection
 from sklearn.linear_model import Ridge
 from multioutput_evaluation.metrics import mse, pcc
@@ -22,7 +23,7 @@ class testcase:
         assert y_hat.shape == f['y'].shape
     def test_grid_search_basic(self):
         GS = me.GridSearchCV(
-                clf = clf,
+                estimator = clf,
                 param_grid = param_grid,
                 cv = model_selection.LabelKFold(2),
                 n_jobs = -1,
@@ -36,7 +37,7 @@ class testcase:
 
     def test_grid_search_basic_multi_output(self):
         GS = me.GridSearchCV(
-                clf = clf,
+                estimator = clf,
                 param_grid = param_grid,
                 cv = model_selection.LabelKFold(2),
                 n_jobs = -1,
@@ -50,7 +51,7 @@ class testcase:
 
     def test_grid_search_different_scoring(self):
         GS = me.GridSearchCV(
-                clf = clf,
+                estimator = clf,
                 param_grid = param_grid,
                 cv = model_selection.LabelKFold(2),
                 scoring=[pcc,mse],
@@ -66,7 +67,7 @@ class testcase:
 
     def test_grid_search_different_numpy_input(self):
         GS = me.GridSearchCV(
-                clf = clf,
+                estimator = clf,
                 param_grid = param_grid,
                 cv = model_selection.LabelKFold(2),
                 scoring=[pcc,mse],
@@ -88,7 +89,7 @@ class testcase:
 
     def test_grid_search_labels(self):
         GS = me.GridSearchCV(
-                clf = clf,
+                estimator = clf,
                 param_grid = param_grid,
                 cv = model_selection.LabelKFold(2),
                 scoring=[pcc,mse],
@@ -102,6 +103,29 @@ class testcase:
                 tmp = pwd+'/tmp/',
                 )
         me.Eval(pwd+'/tmp/'+clf.__class__.__name__)
+
+    def test_compare_with_sk_gridseach(self):
+
+        GS_old = GridSearchCV_old(
+                estimator = clf,
+                param_grid = {'alpha':10.**np.arange(-5,5)},
+                scoring = mse,
+                cv = model_selection.LabelKFold(2),
+                )
+
+        GS_new = me.GridSearchCV(
+                estimator = clf,
+                param_grid = {'alpha':10.**np.arange(-5,5)},
+                scoring = mse,
+                cv = model_selection.LabelKFold(2),
+                )
+
+        GS_old.fit(f['X'][::],f['y'][::,5],f['S'][::])
+        GS_new.fit(f['X'][::],f['y'][::,5],f['S'][::])
+
+        assert GS_old.best_score_-GS_new.get_best_score() < 1e-4
+        assert GS_old.best_params_['alpha']==GS_new.get_best_param()['alpha']
+
 
 
 if __name__ == "__main__":

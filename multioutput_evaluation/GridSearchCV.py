@@ -20,6 +20,7 @@ def Eval(path, verbose = 1):
         print('jobs:',len(glob.glob(path+'/*/setting.dlz')))
         print('done:',len(glob.glob(path+'/*/results.csv')))
     avr_res = defaultdict(list)
+    uniq_para = {}
     for f in glob.glob(path+'/*/results.csv'):
         dat = dill.load(open(f.rsplit('/',1)[0]+'/setting.dlz','rb'))
         res = np.genfromtxt(f.rsplit('/',1)[0]+'/results.csv',dtype=str,delimiter=',')
@@ -28,6 +29,7 @@ def Eval(path, verbose = 1):
         index = res[:,0]
         res = np.float16(res[:,1:])
         avr_res[str(dat['para'])].append(res)
+        uniq_para[str(dat['para'])]=dat['para']
 
     # # get tables with results
     paras, table = [],[]
@@ -41,7 +43,7 @@ def Eval(path, verbose = 1):
     # results of first metric in table [para X output]
     idx = np.argmax(table[0],0)
 
-    best_params_ = paras[np.unique(idx)[0]]
+    best_params_ = uniq_para[paras[np.unique(idx)[0]]]
 
     # # store all results in one table [measures X output]
     dat = np.vstack([tab_[idx,np.arange(idx.shape[0])] for tab_ in table])
@@ -123,8 +125,8 @@ class GridSearchCV():
             self._run_condor(self.out_path, self.n_jobs)
 
     def get_best_param(self):
-        best_score_, best_params, table = Eval(self.out_path,verbose = 0)
-        return best_params
+        best_score_, best_params_, table = Eval(self.out_path,verbose = 0)
+        return best_params_
 
     def get_best_score(self):
         best_score_, best_params, table = Eval(self.out_path,verbose = 0)
