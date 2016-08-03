@@ -1,19 +1,17 @@
-import shutil
-import multiprocessing
-import glob
-import subprocess
-from collections import defaultdict
 import os
-dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
-
+import shutil
 import numpy as np
 import pandas as pd
+import multiprocessing
+import subprocess
+import glob
+import dill, gzip, h5py
+from collections import defaultdict
+
 from sklearn.model_selection import ParameterGrid
-from multioutput_evaluation.metrics import mse
-import pickle as cPickle
-import dill
-import gzip
-import h5py
+from .metrics import mse
+
+dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
 
 def Eval(path, verbose = 1):
     if verbose:
@@ -132,9 +130,7 @@ class GridSearchCV():
         best_score_, best_params, table = Eval(self.out_path,verbose = 0)
         return best_score_
 
-
     def _create_jobs(self, X, y, l, n_folds, cv, out_path):
-
         '''
         '''
         if self.param_grid=='default':
