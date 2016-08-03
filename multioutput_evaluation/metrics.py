@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import make_scorer
 
 def _pre_process(y_hat, y_lab):
     y_hat = np.array(y_hat, dtype=np.float64).T
@@ -19,18 +20,22 @@ def _post_process(res):
 def acc(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean((y_hat==y_lab), 1))
+acc = make_scorer(acc,greater_is_better=False)
 
 def mae(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean(np.abs(y_hat-y_lab), 1))
+mae = make_scorer(mae,greater_is_better=False)
 
 def mse(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean((y_hat-y_lab)**2, 1))
+mse = make_scorer(mse,greater_is_better=False)
 
 def rmse(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean((y_hat-y_lab)**2, 1)**0.5)
+rmse = make_scorer(rmse,greater_is_better=False)
 
 def icc(y_hat, y_lab, cas=3, typ=1):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
@@ -91,6 +96,7 @@ def icc(y_hat, y_lab, cas=3, typ=1):
 
     res[np.isnan(res)] = 0
     return _post_process(res.astype('float32'))
+icc = make_scorer(icc,greater_is_better=False)
 
 def pcc(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
@@ -100,26 +106,9 @@ def pcc(y_hat, y_lab):
     res = np.array(res)
     res[np.isnan(res)] = 0
     return _post_process(res)
+pcc = make_scorer(pcc,greater_is_better=False)
 
-def f1_average(y_hat, y_lab):
-    y_hat, y_lab = _pre_process(y_hat, y_lab)
-    res = []
-    for c in np.unique(y_lab):
-
-        TP_c = np.sum((y_lab == c)*(y_hat == c), 1)
-        FP_c = np.sum((y_lab != c)*(y_hat == c), 1)
-        FN_c = np.sum((y_lab == c)*(y_hat != c), 1)
-        F1_c = (2.*TP_c)/(2*TP_c+FP_c+FN_c).astype(float)
-
-        # set f1 to 0 if there are no TP (avoid division by 0!)
-        F1_c[np.isnan(F1_c)] = 0
-        F1_c[np.isinf(F1_c)] = 0
-        res.append(F1_c)
-
-    res = np.array(res).mean(0)
-    return _post_process(res)
-
-def f1_detection(y_hat, y_lab):
+def f1_det(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     y_hat = y_hat>0
     y_lab = y_lab>0
@@ -131,3 +120,4 @@ def f1_detection(y_hat, y_lab):
 
     F1[np.isinf(F1)] = 0
     return _post_process(F1)
+f1_det = make_scorer(f1_det,greater_is_better=False)

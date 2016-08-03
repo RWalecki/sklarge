@@ -22,7 +22,7 @@ def preprocessing(X,y=None):
 
 from sklearn.linear_model import Ridge as _Ridge
 class MVR():
-    param_grid = {'alpha':10.**np.arange(-6,10)}
+    param_grid = {'alpha':10.**np.arange(-5,6)}
     estimator = _Ridge()
     preprocessing = preprocessing
     def fit(self,X,y,mask=False):

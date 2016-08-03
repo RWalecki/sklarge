@@ -1,28 +1,49 @@
-import dill, pickle, gzip
-import h5py 
+import dill, pickle, gzip, h5py 
 import os
 import numpy as np
+import inspect
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
-
 
 # open file that contains parameter for the experiment
 dat = dill.load(open(dir_pwd+'/setting.dlz','rb'))
-with h5py.File(dat['X'].rsplit('/',1)[0]) as f:
 
-    # load data from root hdf5 file
-    X = f[dat['X'].rsplit('/',1)[1]]
-    y = f[dat['y'].rsplit('/',1)[1]]
-    labels = f[dat['labels'].rsplit('/',1)[1]]
+# load estimator
+clf = dat['clf']
+clf.set_params(**dat['para'])
 
-    cv = dat['cv']
-    clf = dat['clf']
-    clf.set_params(**dat['para'])
+# open dataset: features
+f_X = h5py.File(dat['X'].rsplit('/',1)[0])
+X = f_X[dat['X'].rsplit('/',1)[1]]
 
-    tr,te = [i for i in cv.split(labels,labels,labels)][dat['fold']]
+# open dataset: targets
+f_y = h5py.File(dat['y'].rsplit('/',1)[0])
+y = f_y[dat['y'].rsplit('/',1)[1]]
 
-    clf.fit(X,y,tr)
+# open dataset: labels
+f_labels = h5py.File(dat['labels'].rsplit('/',1)[0])
+labels = f_labels[dat['labels'].rsplit('/',1)[1]]
 
-    y_hat = clf.predict(X,te)
+# training/test split
+tr, te = [i for i in dat['cv'].split(labels,labels,labels)][dat['fold']]
 
-    res = np.vstack([metric(y_hat,y[te.tolist()]) for metric in dat['eval']])
-    np.savetxt(dir_pwd+'/results.csv', res, delimiter=',')
+# check if fit on h5 subset is implemented
+if 'idx' in inspect.getargspec(clf.fit).args:
+    clf.fit( X, y, h5_idx=tr )
+    y_hat = clf.predict( X, te )
+else:
+    clf.fit( X[tr.tolist()], y[tr.tolist()] )
+    y_hat = clf.predict( X[te.tolist()] )
+
+names,score = [],[]
+for scoring in dat['scoring']:
+    names.append(scoring._score_func.func_name)
+    score.append(np.array([scoring._score_func(y[te.tolist()],y_hat)*scoring._sign]))
+
+names = np.vstack(names)
+score = np.vstack(score)
+table = np.hstack((names,score))
+np.savetxt(dir_pwd+'/results.csv', table, fmt="%s",delimiter=',')
+
+f_X.close()
+f_y.close()
+f_labels.close()

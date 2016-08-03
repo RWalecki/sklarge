@@ -1,46 +1,107 @@
 import multioutput_evaluation as me
 from sklearn import model_selection
+from sklearn.linear_model import Ridge
+from multioutput_evaluation.metrics import mse, pcc
 import numpy as np
 import h5py 
 import os
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 
-f = h5py.File('./tests/data/test.h5')
-
-CLF = [
-        me.sk_estimator.MTL(),
-        me.sk_estimator.SVR(),
-        me.sk_estimator.SVC(),
-        ]
+f = h5py.File(pwd+'/data/test.h5')
 
 
+clf = Ridge()
+param_grid = {'alpha':10.**np.arange(-2,3)}
 
 class testcase:
 
-    def test_gird_numpy(self):
-        '''
-        to do!
-        '''
-        pass
-
-    def test_grid_hdf5(self):
-        '''
-        '''
-        clf = me.sk_estimator.MVR()
-        cv = model_selection.LabelKFold(2)
+    def test_sk_estimator(self):
+        clf.fit(f['X'],f['y'])
+        y_hat = clf.predict(f['X'])
+        assert y_hat.shape == f['y'].shape
+    def test_grid_search_basic(self):
         GS = me.GridSearchCV(
-                clf,
-                cv=cv,
-                n_jobs=-1,
+                clf = clf,
+                param_grid = param_grid,
+                cv = model_selection.LabelKFold(2),
+                n_jobs = -1,
                 )
         GS.fit(
-                X = pwd+'/data/test.h5/X',
-                y = pwd+'/data/test.h5/y',
-                labels = pwd+'/data/test.h5/S',
-                tmp = '/tmp/GridSearchCV',
-                submit='local',
+                X = f['X'],
+                y = f['y'][:,5],
+                tmp = pwd+'/tmp/',
                 )
+        me.Eval(pwd+'/tmp/'+clf.__class__.__name__)
+
+    def test_grid_search_basic_multi_output(self):
+        GS = me.GridSearchCV(
+                clf = clf,
+                param_grid = param_grid,
+                cv = model_selection.LabelKFold(2),
+                n_jobs = -1,
+                )
+        GS.fit(
+                X = f['X'],
+                y = f['y'],
+                tmp = pwd+'/tmp/',
+                )
+        me.Eval(pwd+'/tmp/'+clf.__class__.__name__)
+
+    def test_grid_search_different_scoring(self):
+        GS = me.GridSearchCV(
+                clf = clf,
+                param_grid = param_grid,
+                cv = model_selection.LabelKFold(2),
+                scoring=[pcc,mse],
+                n_jobs = -1,
+                verbose = 2,
+                )
+        GS.fit(
+                X = f['X'],
+                y = f['y'],
+                tmp = pwd+'/tmp/',
+                )
+        me.Eval(pwd+'/tmp/'+clf.__class__.__name__)
+
+    def test_grid_search_different_numpy_input(self):
+        GS = me.GridSearchCV(
+                clf = clf,
+                param_grid = param_grid,
+                cv = model_selection.LabelKFold(2),
+                scoring=[pcc,mse],
+                n_jobs = -1,
+                verbose = 2,
+                )
+        GS.fit(
+                X = f['X'][::],
+                y = f['y'][::],
+                tmp = pwd+'/tmp/',
+                )
+        me.Eval(pwd+'/tmp/'+clf.__class__.__name__)
+        GS.fit(
+                X = f['X'],
+                y = f['y'][::],
+                tmp = pwd+'/tmp/',
+                )
+        me.Eval(pwd+'/tmp/'+clf.__class__.__name__)
+
+    def test_grid_search_labels(self):
+        GS = me.GridSearchCV(
+                clf = clf,
+                param_grid = param_grid,
+                cv = model_selection.LabelKFold(2),
+                scoring=[pcc,mse],
+                n_jobs = -1,
+                verbose = 2,
+                )
+        GS.fit(
+                X = f['X'],
+                y = f['y'],
+                labels = np.arange(f['X'].shape[0]),
+                tmp = pwd+'/tmp/',
+                )
+        me.Eval(pwd+'/tmp/'+clf.__class__.__name__)
 
 
 if __name__ == "__main__":
