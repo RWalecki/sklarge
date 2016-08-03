@@ -1,2 +1,2 @@
-import metrics
-import model_selection
+from . import model_selection
+from . import metrics

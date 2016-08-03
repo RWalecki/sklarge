@@ -26,9 +26,9 @@ setup(
         "License :: OSI Approved :: BSD License",
     ],
     data_files = [
-        ('./multioutput_evaluation/job_files/', ['./multioutput_evaluation/job_files/execute.sh']),
-        ('./multioutput_evaluation/job_files/', ['./multioutput_evaluation/job_files/run_condor.cmd']),
-        ('./multioutput_evaluation/job_files/', ['./multioutput_evaluation/job_files/run_local.py']),
+        ('./sklarge/job_files/', ['./sklarge/job_files/execute.sh']),
+        ('./sklarge/job_files/', ['./sklarge/job_files/run_condor.cmd']),
+        ('./sklarge/job_files/', ['./sklarge/job_files/run_local.py']),
         ],
     packages=find_packages(),
 )

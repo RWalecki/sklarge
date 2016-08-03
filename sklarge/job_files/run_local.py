@@ -36,7 +36,7 @@ else:
 
 names,score = [],[]
 for scoring in dat['scoring']:
-    names.append(scoring._score_func.func_name)
+    names.append(scoring._score_func.__name__)
     score.append(np.array([scoring._score_func(y[te.tolist()],y_hat)*scoring._sign]))
 
 names = np.vstack(names)
