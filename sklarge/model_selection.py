@@ -100,7 +100,7 @@ class GridSearchCV():
                 pwd = self.out_path+'.tmp/'+name+'.h5'
                 try:
                     os.makedirs(pwd.rsplit('/',1)[0])
-                except FileExistsError:
+                except:
                     pass
                 os.remove(pwd) if os.path.exists(pwd) else None
                 with h5py.File(pwd) as f:
