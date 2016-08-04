@@ -9,9 +9,10 @@ import dill, gzip, h5py
 from collections import defaultdict
 
 from sklearn.model_selection import ParameterGrid
-from .metrics import mse
+from .metrics import mse,pcc
 
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
+
 
 def Eval(path, verbose = 1):
     if verbose:
@@ -59,7 +60,8 @@ def Eval(path, verbose = 1):
 
 
 class GridSearchCV():
-
+    '''
+    '''
     def __init__(
             self, 
             estimator, 
@@ -68,7 +70,9 @@ class GridSearchCV():
             n_jobs = -1, 
             cv=None, 
             refit=False,
+            save_pred = False,
             verbose=0,
+            out_path = '.tmp'
             ):
         '''
         '''
@@ -79,43 +83,47 @@ class GridSearchCV():
         self.verbose = verbose
         self.refit = refit
         self.scoring = scoring
+        self.save_pred = save_pred
+        self.out_path = out_path
 
-    def _to_h5(self, X,y,labels=None):
+    def _to_h5_string(self, X,y, labels=None):
+        '''
+        '''
+        # if not labels/subjects, give each sample unique label
         if labels==None:labels = np.arange(X.shape[0])
 
         _args = []
-        for dset,name in zip([X,y,labels],['X','y','labels']):
+        for dset, name in zip([X,y,labels],['X','y','labels']):
+
+            # converte to hdf5 if file is in numpy format
             if type(dset) is not h5py._hl.dataset.Dataset:
-
-                pwd = '/tmp/GridSearchCV_tmp_'+name+'.h5'
+                pwd = self.out_path+'.tmp/'+name+'.h5'
+                try:
+                    os.makedirs(pwd.rsplit('/',1)[0])
+                except FileExistsError:
+                    pass
                 os.remove(pwd) if os.path.exists(pwd) else None
-                f = h5py.File(pwd)
-
-                f.create_dataset(name,data=dset)
-                f.close()
-                f = h5py.File(pwd)
-                _args.append(f[name])
-
+                with h5py.File(pwd) as f:
+                    h5_dset = f.create_dataset(name,data=dset)
+                    id = [h5_dset.file.filename,name]
             else:
-                _args.append(dset)
+                id = [dset.file.filename,dset.name]
+            _args.append(id)
+
+        # return paths to files and datasts
         return _args
 
-    def fit(self, X, y,labels=None, tmp='/tmp/GridSearchCV', submit='local'):
+    def fit(self, X, y, labels=None, submit='local'):
         '''
         '''
 
-        if tmp[-1]!='/':tmp=tmp+'/'
-        self.out_path = tmp+self.estimator.__class__.__name__+'/'
+        self.out_path = os.path.abspath(self.out_path)
+        if self.out_path[-1] is not '/': self.out_path+='/'
         shutil.rmtree(self.out_path, ignore_errors=True)
 
-        X, y, labels = self._to_h5(X, y, labels)
+        X, y, labels = self._to_h5_string(X, y, labels)
 
-
-        data_splits = [i for i in self.cv.split(labels[::],labels[::],labels[::])]
-        n_folds = len(data_splits)
-
-
-        self._create_jobs(X, y, labels, n_folds, self.cv, self.out_path)
+        self._create_jobs(X, y, labels, self.cv, self.out_path)
 
         if submit=='local':
             self._run_local(self.out_path, self.n_jobs)
@@ -130,9 +138,14 @@ class GridSearchCV():
         best_score_, best_params, table = Eval(self.out_path,verbose = 0)
         return best_score_
 
-    def _create_jobs(self, X, y, l, n_folds, cv, out_path):
+    def _create_jobs(self, X, y, labels, cv, out_path):
         '''
         '''
+        # get number of folds TODO: check if there is a better way
+        with h5py.File(labels[0]) as f:
+            l = f[labels[1]]
+            n_folds = len([i for i in cv.split(l,l,l)])
+
         if self.param_grid=='default':
             self.param_grid = self.estimator.param_grid
         params = ParameterGrid(self.param_grid)
@@ -140,7 +153,7 @@ class GridSearchCV():
         if self.scoring!=None:
             scoring=self.scoring
         else:
-            scoring=[mse]
+            scoring=[mse, pcc]
         if type(scoring) is not list:scoring = [scoring]
 
         if self.verbose:print('n_tasks:',len(params)*n_folds)
@@ -151,12 +164,13 @@ class GridSearchCV():
                 out = '/'.join([out_path,str(job)])
                 if not os.path.exists(out):os.makedirs(out)
                 experiment = {}
-                experiment['X']=X.file.filename+X.name
-                experiment['y']=y.file.filename+y.name
-                experiment['labels']=l.file.filename+l.name
+                experiment['X']=X
+                experiment['y']=y
+                experiment['labels']=labels
                 experiment['para']=para
                 experiment['fold']=fold
                 experiment['scoring']=scoring
+                experiment['save_pred']=self.save_pred
                 experiment['cv']=cv
                 experiment['clf']=self.estimator
                 dill.dump(experiment, open(out+'/setting.dlz','wb'))
@@ -188,10 +202,10 @@ class GridSearchCV():
 
         # create condor file:
         with open(out_path+'/run_condor.cmd','w') as f:
-            f.write('executable      = '+out_path+'/execute.sh\n')
-            f.write('output          = '+out_path+'/$(Process)/tmp.out\n')
-            f.write('error           = '+out_path+'/$(Process)/tmp.err\n')
-            f.write('log             = '+out_path+'/tmp.log\n')
+            f.write('executable      = '+out_path+'execute.sh\n')
+            f.write('output          = '+out_path+'$(Process)/tmp.out\n')
+            f.write('error           = '+out_path+'$(Process)/tmp.err\n')
+            f.write('log             = '+out_path+'tmp.log\n')
             f.write('arguments       = $(Process)\n')
             f.write('queue '+n+'\n')
 

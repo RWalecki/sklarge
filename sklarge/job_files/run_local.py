@@ -12,16 +12,9 @@ clf = dat['clf']
 clf.set_params(**dat['para'])
 
 # open dataset: features
-f_X = h5py.File(dat['X'].rsplit('/',1)[0])
-X = f_X[dat['X'].rsplit('/',1)[1]]
-
-# open dataset: targets
-f_y = h5py.File(dat['y'].rsplit('/',1)[0])
-y = f_y[dat['y'].rsplit('/',1)[1]]
-
-# open dataset: labels
-f_labels = h5py.File(dat['labels'].rsplit('/',1)[0])
-labels = f_labels[dat['labels'].rsplit('/',1)[1]]
+X = h5py.File(dat['X'][0])[dat['X'][1]]
+y = h5py.File(dat['y'][0])[dat['y'][1]]
+labels = h5py.File(dat['labels'][0])[dat['labels'][1]]
 
 # training/test split
 tr, te = [i for i in dat['cv'].split(labels,labels,labels)][dat['fold']]
@@ -34,6 +27,7 @@ else:
     clf.fit( X[tr.tolist()], y[tr.tolist()] )
     y_hat = clf.predict( X[te.tolist()] )
 
+# save results
 names,score = [],[]
 for scoring in dat['scoring']:
     names.append(scoring._score_func.__name__)
@@ -44,6 +38,14 @@ score = np.vstack(score)
 table = np.hstack((names,score))
 np.savetxt(dir_pwd+'/results.csv', table, fmt="%s",delimiter=',')
 
-f_X.close()
-f_y.close()
-f_labels.close()
+# save predictions
+if dat['save_pred']==True:
+    with h5py.File(dir_pwd+'/y_hat.h5') as f:
+        f.create_dataset('y_hat',data=y_hat)
+
+# close all files
+for group in [X,y,labels]:
+    try:
+        group.file.close()
+    except RuntimeError:
+        pass

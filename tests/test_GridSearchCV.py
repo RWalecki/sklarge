@@ -23,19 +23,47 @@ class testcase:
         y_hat = clf.predict(f['X'])
         assert y_hat.shape == f['y'].shape
 
+    def test_multiple_run(self):
+        GS = GridSearchCV(
+                estimator = clf,
+                param_grid = param_grid,
+                cv = LabelKFold(2),
+                n_jobs = -1,
+                out_path = 'tmp',
+                )
+        GS.fit(
+                X = f['X'],
+                y = f['y'][:,5],
+                )
+        Eval('tmp/')
+        GS = GridSearchCV(
+                estimator = clf,
+                param_grid = param_grid,
+                cv = LabelKFold(2),
+                n_jobs = -1,
+                out_path = 'tmp',
+                )
+
+        GS.fit(
+                X = f['X'],
+                y = f['y'][:,5],
+                )
+        Eval('tmp/')
+
+
     def test_grid_search_basic(self):
         GS = GridSearchCV(
                 estimator = clf,
                 param_grid = param_grid,
                 cv = LabelKFold(2),
                 n_jobs = -1,
+                out_path = pwd+'/tmp/',
                 )
         GS.fit(
                 X = f['X'],
                 y = f['y'][:,5],
-                tmp = pwd+'/tmp/',
                 )
-        Eval(pwd+'/tmp/'+clf.__class__.__name__)
+        Eval(pwd+'/tmp/')
 
     def test_grid_search_basic_multi_output(self):
         GS = GridSearchCV(
@@ -43,13 +71,13 @@ class testcase:
                 param_grid = param_grid,
                 cv = LabelKFold(2),
                 n_jobs = -1,
+                out_path = pwd+'/tmp/',
                 )
         GS.fit(
                 X = f['X'],
                 y = f['y'],
-                tmp = pwd+'/tmp/',
                 )
-        Eval(pwd+'/tmp/'+clf.__class__.__name__)
+        Eval(pwd+'/tmp/')
 
     def test_grid_search_different_scoring(self):
         GS = GridSearchCV(
@@ -59,13 +87,13 @@ class testcase:
                 scoring=[pcc,mse],
                 n_jobs = -1,
                 verbose = 2,
+                out_path = pwd+'/tmp/',
                 )
         GS.fit(
                 X = f['X'],
                 y = f['y'],
-                tmp = pwd+'/tmp/',
                 )
-        Eval(pwd+'/tmp/'+clf.__class__.__name__)
+        Eval(pwd+'/tmp/')
 
     def test_grid_search_different_numpy_input(self):
         GS = GridSearchCV(
@@ -75,19 +103,18 @@ class testcase:
                 scoring=[pcc,mse],
                 n_jobs = -1,
                 verbose = 2,
+                out_path = pwd+'/tmp/',
                 )
         GS.fit(
                 X = f['X'][::],
                 y = f['y'][::],
-                tmp = pwd+'/tmp/',
                 )
-        Eval(pwd+'/tmp/'+clf.__class__.__name__)
+        Eval(pwd+'/tmp/')
         GS.fit(
                 X = f['X'],
                 y = f['y'][::],
-                tmp = pwd+'/tmp/',
                 )
-        Eval(pwd+'/tmp/'+clf.__class__.__name__)
+        Eval(pwd+'/tmp/')
 
     def test_grid_search_labels(self):
         GS = GridSearchCV(
@@ -97,14 +124,14 @@ class testcase:
                 scoring=[pcc,mse],
                 n_jobs = -1,
                 verbose = 2,
+                out_path = pwd+'/tmp/',
                 )
         GS.fit(
                 X = f['X'],
                 y = f['y'],
                 labels = np.arange(f['X'].shape[0]),
-                tmp = pwd+'/tmp/',
                 )
-        Eval(pwd+'/tmp/'+clf.__class__.__name__)
+        Eval(pwd+'/tmp/')
 
     def test_compare_with_sk_gridseach(self):
         GS_old = GridSearchCV_old(

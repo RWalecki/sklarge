@@ -20,7 +20,7 @@ def _post_process(res):
 def acc(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean((y_hat==y_lab), 1))
-acc = make_scorer(acc,greater_is_better=False)
+acc = make_scorer(acc,greater_is_better=True)
 
 def mae(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
@@ -96,7 +96,7 @@ def icc(y_hat, y_lab, cas=3, typ=1):
 
     res[np.isnan(res)] = 0
     return _post_process(res.astype('float32'))
-icc = make_scorer(icc,greater_is_better=False)
+icc = make_scorer(icc,greater_is_better=True)
 
 def pcc(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
@@ -106,7 +106,7 @@ def pcc(y_hat, y_lab):
     res = np.array(res)
     res[np.isnan(res)] = 0
     return _post_process(res)
-pcc = make_scorer(pcc,greater_is_better=False)
+pcc = make_scorer(pcc,greater_is_better=True)
 
 def f1_det(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
