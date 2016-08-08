@@ -9,7 +9,7 @@ import dill, gzip, h5py
 from collections import defaultdict
 
 from sklearn.model_selection import ParameterGrid
-from .metrics import mse,pcc
+from .metrics import mse, pcc
 
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
 
@@ -117,14 +117,18 @@ class GridSearchCV():
         '''
         '''
 
+        if self.verbose:print('fitting ...')
         self.out_path = os.path.abspath(self.out_path)
         if self.out_path[-1] is not '/': self.out_path+='/'
         shutil.rmtree(self.out_path, ignore_errors=True)
 
+        if self.verbose:print('creating hdf5 files ...')
         X, y, labels = self._to_h5_string(X, y, labels)
 
+        if self.verbose:print('creatin job folder ...')
         self._create_jobs(X, y, labels, self.cv, self.out_path)
 
+        if self.verbose:print('running jobs ...')
         if submit=='local':
             self._run_local(self.out_path, self.n_jobs)
         if submit=='condor':
@@ -160,6 +164,7 @@ class GridSearchCV():
         job = 0
         for fold in range(n_folds):
             for para in  params:
+                if self.verbose>1:print(fold,para)
 
                 out = '/'.join([out_path,str(job)])
                 if not os.path.exists(out):os.makedirs(out)
