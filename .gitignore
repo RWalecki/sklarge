@@ -1,5 +1,6 @@
-multioutput_evaluation.egg-info
+sklarge.egg-info
 build
 dist
-tmp
+tmp*
+.tmp*
 out
