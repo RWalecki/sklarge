@@ -17,27 +17,27 @@ def _post_process(res):
         return res[0]
     return res
 
-def acc(y_hat, y_lab):
+def _acc(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean((y_hat==y_lab), 1))
-acc = make_scorer(acc,greater_is_better=True)
+acc = make_scorer(_acc,greater_is_better=True)
 
-def mae(y_hat, y_lab):
+def _mae(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean(np.abs(y_hat-y_lab), 1))
-mae = make_scorer(mae,greater_is_better=False)
+mae = make_scorer(_mae,greater_is_better=False)
 
-def mse(y_hat, y_lab):
+def _mse(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean((y_hat-y_lab)**2, 1))
-mse = make_scorer(mse,greater_is_better=False)
+mse = make_scorer(_mse,greater_is_better=False)
 
-def rmse(y_hat, y_lab):
+def _rmse(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     return _post_process(np.mean((y_hat-y_lab)**2, 1)**0.5)
-rmse = make_scorer(rmse,greater_is_better=False)
+rmse = make_scorer(_rmse,greater_is_better=False)
 
-def icc(y_hat, y_lab, cas=3, typ=1):
+def _icc(y_hat, y_lab, cas=3, typ=1):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
 
     Y = np.array((y_lab, y_hat))
@@ -96,9 +96,9 @@ def icc(y_hat, y_lab, cas=3, typ=1):
 
     res[np.isnan(res)] = 0
     return _post_process(res.astype('float32'))
-icc = make_scorer(icc,greater_is_better=True)
+icc = make_scorer(_icc,greater_is_better=True)
 
-def pcc(y_hat, y_lab):
+def _pcc(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     res = []
     for y1, y2 in zip(y_lab, y_hat):
@@ -106,9 +106,9 @@ def pcc(y_hat, y_lab):
     res = np.array(res)
     res[np.isnan(res)] = 0
     return _post_process(res)
-pcc = make_scorer(pcc,greater_is_better=True)
+pcc = make_scorer(_pcc,greater_is_better=True)
 
-def f1_det(y_hat, y_lab):
+def _f1_det(y_hat, y_lab):
     y_hat, y_lab = _pre_process(y_hat, y_lab)
     y_hat = y_hat>0
     y_lab = y_lab>0
@@ -120,4 +120,4 @@ def f1_det(y_hat, y_lab):
 
     F1[np.isinf(F1)] = 0
     return _post_process(F1)
-f1_det = make_scorer(f1_det,greater_is_better=False)
+f1_det = make_scorer(_f1_det,greater_is_better=False)

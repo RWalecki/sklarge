@@ -1,4 +1,4 @@
-import dill, pickle, gzip, h5py 
+import dill, h5py 
 import os
 import numpy as np
 import inspect
