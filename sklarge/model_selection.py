@@ -9,6 +9,7 @@ import dill, gzip, h5py
 from collections import defaultdict
 
 from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import LabelKFold, LeaveOneLabelOut
 from .metrics import mse, pcc
 
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
@@ -69,6 +70,7 @@ class GridSearchCV():
             scoring = None,
             n_jobs = -1, 
             cv=None, 
+            cv_folds = 'all',
             refit=False,
             save_pred = False,
             verbose=0,
@@ -80,6 +82,7 @@ class GridSearchCV():
         self.param_grid = param_grid
         self.n_jobs = n_jobs
         self.cv = cv
+        self.cv_folds = cv_folds
         self.verbose = verbose
         self.refit = refit
         self.scoring = scoring
@@ -145,10 +148,10 @@ class GridSearchCV():
     def _create_jobs(self, X, y, labels, cv, out_path):
         '''
         '''
-        # get number of folds TODO: check if there is a better way
-        with h5py.File(labels[0]) as f:
-            l = f[labels[1]]
-            n_folds = len([i for i in cv.split(l,l,l)])
+        if self.cv_folds=='all':
+            cv_folds = np.arange(cv.n_folds)
+        else:
+            cv_folds = self.cv_folds
 
         if self.param_grid=='default':
             self.param_grid = self.estimator.param_grid
@@ -160,9 +163,9 @@ class GridSearchCV():
             scoring=[mse, pcc]
         if type(scoring) is not list:scoring = [scoring]
 
-        if self.verbose:print('n_tasks:',len(params)*n_folds)
+        if self.verbose:print('n_tasks:',len(params)*len(cv_folds))
         job = 0
-        for fold in range(n_folds):
+        for fold in cv_folds:
             for para in  params:
                 if self.verbose>1:print(fold,para)
 

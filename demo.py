@@ -1,19 +1,19 @@
-from sklearn.model_selection import LabelKFold
+from sklarge.model_selection import GridSearchCV, LabelKFold, Eval
 from sklearn.linear_model import Ridge
-from sklarge.model_selection import GridSearchCV, Eval
 import h5py
-import numpy as np
 
 
 f = h5py.File('tests/data/test.h5')
+cv = LabelKFold(3)
+
 
 clf = Ridge()
-param_grid = {'alpha':10.**np.arange(-2,3)}
+param_grid = {'alpha':[0.01, 0.1, 1., 10., 100.]}
 
 GS = GridSearchCV(
         estimator = clf,
         param_grid = param_grid,
-        cv = LabelKFold(2),
+        cv = LabelKFold(3),
         n_jobs = -1,
         out_path = '.tmp'
         )

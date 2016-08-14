@@ -50,7 +50,6 @@ class testcase:
                 )
         Eval('tmp/')
 
-
     def test_grid_search_basic(self):
         GS = GridSearchCV(
                 estimator = clf,
@@ -154,6 +153,34 @@ class testcase:
         assert GS_old.best_score_-GS_new.get_best_score() < 1e-4
         assert GS_old.best_params_['alpha']==GS_new.get_best_param()['alpha']
 
+    def test_cn_folds(self):
+        GS = GridSearchCV(
+                estimator = clf,
+                param_grid = param_grid,
+                cv = LabelKFold(2),
+                cv_folds = [0],
+                n_jobs = -1,
+                out_path = pwd+'/tmp/',
+                )
+        GS.fit(
+                X = f['X'],
+                y = f['y'][:,5],
+                )
+        Eval(pwd+'/tmp/')
+
+        GS = GridSearchCV(
+                estimator = clf,
+                param_grid = param_grid,
+                cv = LabelKFold(4),
+                cv_folds = [0,2],
+                n_jobs = -1,
+                out_path = pwd+'/tmp/',
+                )
+        GS.fit(
+                X = f['X'],
+                y = f['y'][:,5],
+                )
+        Eval(pwd+'/tmp/')
 
 
 if __name__ == "__main__":
