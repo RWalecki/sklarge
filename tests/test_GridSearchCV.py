@@ -1,13 +1,12 @@
 import os
 import h5py 
 import numpy as np
-# import estimator
 
 from sklarge import GridSearchCV, run_local, evaluation
 from sklearn.linear_model import SGDRegressor 
 from sklearn.multioutput import MultiOutputClassifier 
-
 from sklarge.metrics import mse, pcc
+
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -48,13 +47,14 @@ class testcase:
         run_local(pwd+'/tmp',-1)
         evaluation(pwd+'/tmp')
 
-    def test_tr_tr(self):
+    def test_tr_tr_user_scoring(self):
 
         idx = [ [ [0], [0] ] ]
 
         GS = GridSearchCV(
                 estimator =  clf,
                 param_grid = para,
+                scoring = [mse,pcc],
                 verbose=1
                 )
 

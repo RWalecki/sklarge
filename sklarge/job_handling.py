@@ -20,6 +20,7 @@ def run_local(pwd, n_jobs = -1, mode='r'):
     jobs = [i for i in zip(['python']*len(jobs),jobs)]
 
     p.map(subprocess.call,jobs)
+
     p.close()
 
 

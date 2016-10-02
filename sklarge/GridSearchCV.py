@@ -66,6 +66,7 @@ class GridSearchCV():
         if self.verbose:print('parameter:'.ljust(10),len(X))
         if self.verbose:print('n_tasks:'.ljust(10),len(params)*len(X))
 
+
         job = 0
         for f,[tr,te] in enumerate(idx):
             for para in  params:

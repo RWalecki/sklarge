@@ -2,6 +2,7 @@ import numpy as np
 import dill
 import os
 import h5py
+import sys
 
 
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
@@ -37,6 +38,7 @@ try:
     clf.fit( X_tr, Y_tr, X_te, Y_te, save=dir_pwd+'/model_output' )
 except TypeError:
     clf.fit( X_tr, Y_tr)
+
 
 # save results (validation)
 Y_hat_te = clf.predict( X_te )
