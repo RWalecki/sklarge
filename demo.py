@@ -1,4 +1,4 @@
-from sklarge import GridSearchCV, run_local, evaluation
+from sklarge import GridSearchCV, run_local, evaluation, run_condor
 
 from sklearn.linear_model import Ridge
 from sklearn import datasets
@@ -29,7 +29,15 @@ GS = GridSearchCV(
         param_grid = param_grid,
         )
 
-GS._create_job_files(X, y, idx, out_path='.tmp')
+GS._create_job_files(X, y, idx, out_path='tmpg', mode = 'w')
+run_condor('tmpg',1,graphic_only=1)
 
-run_local('.tmp',-1)
-evaluation('.tmp')
+GS._create_job_files(X, y, idx, out_path='tmpc', mode = 'w')
+run_condor('tmpc',1,graphic_only=0)
+
+GS._create_job_files(X, y, idx, out_path='tmp2', mode = 'w')
+run_local('tmp2',1)
+
+evaluation('tmpc')
+evaluation('tmpg')
+evaluation('tmp2')

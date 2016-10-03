@@ -30,7 +30,7 @@ class testcase:
                 verbose=1
                 )
 
-        GS._create_job_files(X,y,idx,pwd+'/tmp')
+        GS._create_job_files(X,y,idx,pwd+'/tmp',mode='w')
         run_local(pwd+'/tmp',-1)
         evaluation(pwd+'/tmp')
 
@@ -44,7 +44,7 @@ class testcase:
                 verbose=1
                 )
 
-        GS._create_job_files(X,y,idx,pwd+'/tmp')
+        GS._create_job_files(X,y,idx,pwd+'/tmp',mode='w')
         run_local(pwd+'/tmp',-1)
         evaluation(pwd+'/tmp')
 
@@ -59,7 +59,7 @@ class testcase:
                 verbose=1
                 )
 
-        GS._create_job_files(X,y,idx,pwd+'/tmp')
+        GS._create_job_files(X,y,idx,pwd+'/tmp',mode='w')
         run_local(pwd+'/tmp',-1)
         evaluation(pwd+'/tmp')
 
@@ -73,7 +73,7 @@ class testcase:
                 verbose=1
                 )
 
-        GS._create_job_files(X,y,idx,pwd+'/tmp')
+        GS._create_job_files(X,y,idx,pwd+'/tmp',mode='w')
         run_local(pwd+'/tmp',-1)
         evaluation(pwd+'/tmp')
 

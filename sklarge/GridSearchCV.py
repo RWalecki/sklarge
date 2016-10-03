@@ -42,13 +42,14 @@ class GridSearchCV():
         self.save_pred = save_pred
 
 
-    def _create_job_files(self, X, y, idx,  out_path='/tmp/GridSearchCV'):
+    def _create_job_files(self, X, y, idx,  out_path='/tmp/GridSearchCV',mode='r'):
         '''
         '''
         assert(len(X)==len(y)),'features and labels have not the same length'
 
         out_path = os.path.abspath(out_path)
-        shutil.rmtree(out_path, ignore_errors=True)
+        if mode=='w':
+            shutil.rmtree(out_path, ignore_errors=True)
         if not os.path.exists(out_path):os.makedirs(out_path)
 
         if type(X[0])!=str:
@@ -62,8 +63,8 @@ class GridSearchCV():
         params = [i for i in params]
         shuffle(params)
 
-        if self.verbose:print('folds:'.ljust(10),len(X))
-        if self.verbose:print('parameter:'.ljust(10),len(X))
+        if self.verbose:print('folds:'.ljust(10),len(idx))
+        if self.verbose:print('parameter:'.ljust(10),len(idx))
         if self.verbose:print('n_tasks:'.ljust(10),len(params)*len(X))
 
 
