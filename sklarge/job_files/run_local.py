@@ -2,10 +2,6 @@ import numpy as np
 import dill
 import os
 import h5py
-import sys
-import socket
-print(socket.gethostname())
-
 
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
 
