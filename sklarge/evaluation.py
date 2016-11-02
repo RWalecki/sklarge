@@ -96,7 +96,7 @@ def evaluation(path, best_joint=True, verbose=1, condition={}):
     best_score_ = dat[0,-1]
 
     columns = [str(i) for i in np.arange(idx.shape[0])]+['avr.']
-    index = [i[1:].ljust(4)+'|' for i in index]
+    index = [i[1:] for i in index]
     tab = pd.DataFrame(np.abs(dat),index=index, columns = columns)
 
     if verbose:print(tab)

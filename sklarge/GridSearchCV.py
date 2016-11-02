@@ -11,7 +11,7 @@ from .metrics import rmse, mae, icc, pcc, acc
 
 dir_pwd = (os.path.abspath(__file__).rsplit('/',1)[0])
 
-def _make_to_h5(data_seq, path):
+def _to_h5(data_seq, path):
     h5_path = []
     for i, data in enumerate(data_seq):
         path_data_set = path+str(i).zfill(6)+'.h5'
@@ -29,6 +29,7 @@ class GridSearchCV():
             self, 
             estimator, 
             param_grid = 'default', 
+            output_labels = None,
             scoring=[acc, rmse, mae, pcc, icc],
             save_pred = False,
             verbose=0,
@@ -39,6 +40,7 @@ class GridSearchCV():
         self.param_grid = param_grid
         self.verbose = verbose
         self.scoring = scoring
+        self.output_labels = output_labels
         self.save_pred = save_pred
 
 
@@ -53,9 +55,9 @@ class GridSearchCV():
         if not os.path.exists(out_path):os.makedirs(out_path)
 
         if type(X[0])!=str:
-            X = _make_to_h5(X, out_path+'/.tmp_X')
+            X = _to_h5(X, out_path+'/.tmp_X')
         if type(y[0])!=str:
-            y = _make_to_h5(y, out_path+'/.tmp_y')
+            y = _to_h5(y, out_path+'/.tmp_y')
 
         if self.param_grid=='default':
             self.param_grid = self.estimator.param_grid
@@ -77,12 +79,14 @@ class GridSearchCV():
                     'data_tr' : [[X[i], y[i]] for i in tr],
                     'data_te' : [[X[i], y[i]] for i in te],
                     'save_pred' : self.save_pred ,
+                    'output_labels' : self.output_labels,
                     'scoring' : self.scoring,
                     'clf' : self.estimator,
                     'para' : para,
                 }
 
                 out = '/'.join([out_path,str(job)])
+
                 os.makedirs(out)
                 dill.dump(experiment, open(out+'/setting.dlz','wb'))
                 shutil.copy(dir_pwd+'/job_files/run_local.py',out)

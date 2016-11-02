@@ -26,9 +26,14 @@ for X_pwd, Y_pwd in dat['data_te']:
 X_te = np.vstack(X_te)
 Y_te = np.vstack(Y_te)
 
+if dat['output_labels']!=None:
+    Y_te = Y_te[:,dat['output_labels']]
+    Y_tr = Y_tr[:,dat['output_labels']]
+
 # load estimator
 clf = dat['clf']
 clf.set_params(**dat['para'])
+
 
 try:
     # try to fit an tf_estimater
@@ -39,9 +44,10 @@ except TypeError:
 
 # save results (validation)
 Y_hat_te = clf.predict( X_te )
+
 if dat['save_pred']:
     np.savez(dir_pwd+'/y_te_hat', Y_hat_te)
-    np.savez(dir_pwd+'/y_te', Y_hat_te)
+    np.savez(dir_pwd+'/y_te', Y_te)
 
 names,score = [],[]
 for scoring in dat['scoring']:
@@ -57,7 +63,7 @@ np.savetxt(dir_pwd+'/results.csv', table, fmt="%s",delimiter=',')
 Y_hat_tr = clf.predict( X_tr )
 if dat['save_pred']:
     np.savez(dir_pwd+'/y_tr_hat.h5', Y_hat_tr)
-    np.savez(dir_pwd+'/y_tr', Y_hat_tr)
+    np.savez(dir_pwd+'/y_tr', Y_tr)
 
 names,score = [],[]
 for scoring in dat['scoring']:
