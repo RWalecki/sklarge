@@ -37,8 +37,6 @@ GS._create_job_files(X_set, Y_set, idx, out_path='tmp_jobs', mode = 'w')
 run_local('tmp_jobs',-1)
 
 out = evaluation('tmp_jobs', best_joint=True, verbose=2,condition={'normalize':False})
-# out = evaluation('tmp_jobs', best_joint=True, verbose=2)
-print(out['table'].shape)
 print(out['best_params'])
 
 import MyScripts

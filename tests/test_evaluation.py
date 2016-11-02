@@ -50,6 +50,11 @@ class testcase:
         assert(np.max(out['table'])>0)
         assert(np.min(out['table'])<0)
 
+    # def test_metrics(self):
+
+        # out = evaluation(pwd+'/tmp_eval')
+        # pass
+
 
 
 if __name__ == "__main__":
