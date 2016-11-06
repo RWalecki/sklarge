@@ -7,9 +7,10 @@ import numpy as np
 
 pd.set_option('expand_frame_repr', False)
 
-def evaluation(path, best_joint=True, verbose=1, condition={}):
 
-    done_experiments = glob.glob(path+'/*/results.csv')
+def evaluation(path, best_joint=True, verbose=1, data_set='te', condition={}):
+
+    done_experiments = glob.glob(path+'/*/results_'+data_set+'.csv')
 
     if verbose>1:
         print('jobs:',len(glob.glob(path+'/*/setting.dlz')))
@@ -48,7 +49,7 @@ def evaluation(path, best_joint=True, verbose=1, condition={}):
         if skip_parameter:
             continue
 
-        res = np.genfromtxt(f.rsplit('/',1)[0]+'/results.csv',dtype=str,delimiter=',')
+        res = np.genfromtxt(f.rsplit('/',1)[0]+'/results_'+data_set+'.csv',dtype=str,delimiter=',')
         if len(res.shape)==1:res = res[None,:]
         index = res[:,0]
         paths_for_folds[str(par)].append(f)
@@ -79,6 +80,10 @@ def evaluation(path, best_joint=True, verbose=1, condition={}):
 
     table = np.stack(table).transpose(1,0,2)
 
+    # remove nan from table
+    valid_idx = np.argwhere(np.isnan(table.mean(0).mean(0))==False)[:,0]
+    table = table[:,:,valid_idx]
+
     # results of first metric in table [para X output]
     if best_joint==True:
         idx = np.tile(np.argmax(table[-1].mean(1)),table.shape[2])
@@ -108,4 +113,41 @@ def evaluation(path, best_joint=True, verbose=1, condition={}):
             'index': index,
             'columns': columns,
             'file_paths': paths_for_folds[str(best_params)],
+            'root_path': path,
             }
+
+def print_summary(evaluation_res, model_names=None, save_excel=False):
+
+    tables = []
+    best_params = []
+    models = []
+    for i, res in enumerate(evaluation_res):
+        if model_names!=None:
+            models.append(model_names[i])
+        else:
+            models.append(res['root_path'].split('/')[-1])
+        tables.append(res['table'][None,:,:])
+        best_params.append(res['best_params'])
+        columns = res['columns']
+        index = res['index']
+    tables=np.transpose(np.concatenate(tables),[1,0,2])
+
+    if save_excel:
+        writer = pd.ExcelWriter(save_excel,engine='xlsxwriter')
+
+    
+    out = {}
+    for i,t in zip(index,tables):
+        columns = [str(j) for j in np.arange(t.shape[1]-1)]+['avr.']
+        t = pd.DataFrame(np.abs(t),index=models, columns = columns)
+        print()
+        print()
+        print(i+'_'*70)
+        print(t)
+        if save_excel:
+            t.to_excel(writer, sheet_name=i,float_format='% 1.3f')
+        out[i]=t
+    if save_excel:
+        writer.save()
+
+    return out

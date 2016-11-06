@@ -15,7 +15,10 @@ def _process(y_hat, y_lab, fun):
         idx = _y2!=-1
         _y1 = _y1[idx]
         _y2 = _y2[idx]
-        out.append(fun(_y1,_y2))
+        if np.all(_y2==-1):
+            out.append(np.nan)
+        else:
+            out.append(fun(_y1,_y2))
     return np.array(out)
 
 def _acc(y_hat, y_lab):
@@ -140,6 +143,7 @@ if __name__ == "__main__":
     y1[:,0] = y2[:,0]
     y2[:50,0]=-1
     y1[:50,0]=-1
+    y2[:,-1]=-1
 
     print(_acc(y1,y2))
     print(_mae(y1,y2))
